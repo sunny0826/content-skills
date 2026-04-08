@@ -1,29 +1,54 @@
 # content-skills
 
-本仓库保存内容创建相关的 Copilot Skill，供 GitHub Copilot 编程代理（Copilot coding agent）调用，帮助自动化内容创作流程。
+本仓库保存内容创建相关的 AI Skill，供 AI 编程代理调用，帮助自动化内容创作流程。
 
 ## Skills 列表
 
 ### content-creator
 
-**路径**：`.github/agents/skills/content-creator/SKILL.md`
+**路径**：`content-creator/SKILL.md`
 
-根据提供的参考资料创作内容，并将其保存为适配 [Hugo](https://gohugo.io/) 的 Markdown 文件。
+根据提供的参考资料创作高质量内容，并将其保存为适配 [Hugo](https://gohugo.io/) 的 Markdown 文件。
 
-**功能：**
-
-- 分析一个或多个参考资料（URL、文本、文档）
-- 生成结构化文章（引言、正文、结论、参考资料）
-- 自动填充 Hugo front matter（`title`、`date`、`draft`、`description`、`tags`、`categories` 等）
-- 将结果保存为 `.md` 文件，默认路径为 `content/posts/<slug>.md`
+**核心能力：**
+- **深度分析**：支持从 URL、文本片段、PDF 或文档中提取核心观点和数据。
+- **结构化创作**：严格遵循专业性、准确性、可读性等内容要求，自动排版并支持生成 Mermaid 可视化图表。
+- **Hugo 兼容**：自动填充标准的 Hugo front matter（`title`、`date`、`draft`、`tags`、`categories`、`slug` 等）。
+- **一键输出**：自动保存至 `content/posts/<slug>.md` 或指定路径。
 
 **使用示例：**
 
-在 Copilot 对话中调用：
+在对话中向你的 AI 助手发送以下指令：
 
-```
-请使用 content-creator skill，基于以下参考资料撰写一篇关于 Kubernetes 资源管理的文章：
+```text
+使用 content-creator，基于以下链接撰写一篇 Kubernetes 资源管理最佳实践的文章：
 - https://example.com/k8s-resources
-标签：Kubernetes, 云原生
-分类：云原生
+要求标签包含：Kubernetes, 云原生
 ```
+
+---
+
+## 📦 安装与配置
+
+### 使用 `npx skills add` 安装
+
+你可以使用 `npx skills` 快速将本仓库中的 Skill 添加到你的本地项目中：
+
+```bash
+npx skills add https://github.com/sunny0826/content-skills --skill content-creator
+```
+
+### Claude Code Plugin 安装 (推荐)
+
+如果你正在使用 [Claude Code](https://github.com/anthropics/claude-code)，可以通过以下命令将本仓库注册为 Claude Code Plugin Marketplace：
+
+```bash
+/plugin marketplace add sunny0826/content-skills
+```
+
+然后，你可以通过以下步骤安装特定的 skill：
+
+1. 输入并选择 `/plugin browse` (或者在菜单中选择 Browse and install plugins)
+2. 选择 `content-skills`
+3. 选择你需要的 skill (例如 `content-creator`)
+4. 选择 **Install now**
