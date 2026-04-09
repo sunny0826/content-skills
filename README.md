@@ -14,7 +14,7 @@
 - **深度分析**：支持从 URL、文本片段、PDF 或文档中提取核心观点和数据。
 - **结构化创作**：严格遵循专业性、准确性、可读性等内容要求，自动排版并支持生成 Mermaid 可视化图表。
 - **Hugo 兼容**：自动填充标准的 Hugo front matter（`title`、`date`、`draft`、`tags`、`categories`、`slug` 等）。
-- **一键输出**：自动保存至 `content/posts/<slug>.md` 或指定路径。
+- **一键输出**：自动保存至 `content/post/<slug>/index.md` 或指定路径（支持为每篇文章创建独立的目录）。
 
 **使用示例：**
 
