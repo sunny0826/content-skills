@@ -20,7 +20,7 @@ user-invocable: true
 1. **参考资料**：可以是一个或多个 URL、文本片段、文档内容或关键要点列表。
 2. **目标主题/标题**（可选）：文章的主题方向。
 3. **分类与标签**（可选）：Hugo 文章的 `categories` 和 `tags`。
-4. **输出路径**（可选）：保存文件的相对路径，默认为 `content/posts/<slug>.md`。
+4. **输出路径**（可选）：保存文件的相对路径，默认为 `content/post/<slug>.md`。
 
 ## 工作流程
 
@@ -78,7 +78,7 @@ user-invocable: true
 - `slug`：URL 友好的文章标识符（转为小写、空格替换为连字符，可选）。
 
 ### 4. 保存与输出
-将生成的内容写入用户指定（或默认的 `content/posts/<slug>.md`）的 Markdown 文件中。
+将生成的内容写入用户指定（或默认的 `content/post/<slug>.md`）的 Markdown 文件中。
 
 ## 输出结构参考
 
