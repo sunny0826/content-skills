@@ -26,6 +26,23 @@
 要求标签包含：Kubernetes, 云原生
 ```
 
+### content-checker
+
+**路径**：`content-checker/SKILL.md`
+
+专门用于核查由 `content-creator` 生成的内容或任何 Markdown 文章，对比参考资料进行事实与质量核查。
+
+**核心能力：**
+- **事实对比**：深度比对原文与生成文章，捕捉数据、时间、逻辑等事实偏差。
+- **只读审核**：绝不直接修改用户文件，而是出具结构化的核查报告。
+- **建设性建议**：针对翻译生硬、表达不当等问题，给出具体的重写参考与改进建议。
+
+**使用示例：**
+
+```text
+使用 content-checker，核查 content/post/my-article/index.md，参考资料是：https://example.com/source
+```
+
 ---
 
 ## 📦 安装与配置
