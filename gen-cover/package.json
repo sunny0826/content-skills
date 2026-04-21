@@ -1,0 +1,16 @@
+{
+  "name": "gen-cover",
+  "version": "1.0.0",
+  "description": "CLI tool to generate WeChat Official Account covers based on article-tools",
+  "main": "index.js",
+  "bin": {
+    "gen-cover": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "puppeteer": "^24.42.0"
+  }
+}

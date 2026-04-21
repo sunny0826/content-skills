@@ -45,3 +45,8 @@ skills-lock.json
 .agents
 .claude
 content
+
+gen-cover/node_modules
+gen-cover/test_classic.png
+gen-cover/test_cyberpunk.png
+gen-cover/test_sphere.png

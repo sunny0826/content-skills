@@ -1,0 +1,10 @@
+{
+  "name": "gen-cover-template",
+  "version": "1.0.0",
+  "description": "Cover generator script for generate-cover skill",
+  "main": "index.js",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "puppeteer": "^21.11.0"
+  }
+}
