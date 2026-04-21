@@ -8,6 +8,13 @@
   <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
   <style>
     @font-face {
+      font-family: 'ChillMatrixBlack';
+      src: url('https://guoxudong.io/fonts/ChillMatrixBlack.otf') format('opentype');
+      font-weight: 100 900;
+      font-style: normal;
+    }
+
+    @font-face {
       font-family: 'Noto Serif SC';
       src: url('fonts/NotoSerifSC-Regular.otf') format('opentype');
       font-weight: 400;
@@ -1799,13 +1806,14 @@
     const DEFAULT_RATIO = '1200/480';
     const DEFAULT_SCHEME = 6;
     const DEFAULT_DECO = 'classic';
-    const DEFAULT_FONT = 'default';
+    const DEFAULT_FONT = 'chill';
     let currentDeco = 'classic';
 
     const SOURCE_IMAGES = ['images/source/source1.png', 'images/source/source2.png', 'images/source/source3.png'];
     const coverImgState = { path: null, visible: true, size: 25, right: 3 };
 
     const FONT_OPTIONS = {
+      chill: { name: 'ChillMatrix Black', family: "'ChillMatrixBlack', sans-serif" },
       default: { name: 'Noto Serif SC', family: "'Noto Serif SC', serif" },
       misans: { name: '小米 MiSans', family: "'FFMiSans', 'Noto Serif SC', sans-serif", loadFamily: 'FFMiSans' },
       xinxihei: { name: '霞鹜新晰黑', family: "'FFXinXiHei', 'Noto Serif SC', sans-serif", loadFamily: 'FFXinXiHei' },
@@ -1814,7 +1822,7 @@
       jingang: { name: '创客贴金刚体 3.0', family: "'FFJingang', 'Noto Serif SC', sans-serif", loadFamily: 'FFJingang' },
       manhei: { name: '霞鹜漫黑', family: "'FFManHei', 'Noto Serif SC', sans-serif", loadFamily: 'FFManHei' },
     };
-    const FONT_ORDER = ['default', 'misans', 'xinxihei', 'nanoflat', 'xiangcube', 'jingang', 'manhei'];
+    const FONT_ORDER = ['chill', 'default', 'misans', 'xinxihei', 'nanoflat', 'xiangcube', 'jingang', 'manhei'];
 
     // ── Field visibility ──────────────────────────────────────────────────
     const VIS_MAP = {

@@ -92,20 +92,20 @@ user-invocable: true
 - `image`：文章封面图的公开 URL（可选，等待 `qiniu-kodo` 上传完成后回填）。
 
 ### 4. 生成封面并上传图床
-在完成文章正文和 Front Matter 的编写后，你需要为该文章生成并配置封面图：
-1. **调用 `generate-cover` Skill**：根据文章的 `title`、`description`（作为 subtitle）、`tags`/`categories`（作为 label）以及作者等信息，调用 `generate-cover` Skill 生成封面图。**务必在文章生成所在项目根目录或当前工作目录下创建一个名为 `.cover-generator-<slug>` 的隐藏文件夹，仅用于输出封面文件**（避免污染最终 `content/post/<slug>/` 目录，也避免跨目录访问导致的权限拦截问题）。依赖默认会缓存到 `~/.cache/gen-cover-skill/`，不会写入文章目录。
+在正式开始写文章正文和生成文件之前，你需要先为该文章生成并配置封面图：
+1. **构思文章元数据**：首先根据参考资料，提炼出文章的 `title`、`description`（作为 subtitle）、`tags`/`categories`（作为 label）以及作者等信息。**此时请不要输出文章正文内容。**
+2. **调用 `generate-cover` Skill**：根据上一步提炼的信息，调用 `generate-cover` Skill 生成封面图。**务必在文章生成所在项目根目录或当前工作目录下创建一个名为 `.cover-generator-<slug>` 的隐藏文件夹，仅用于输出封面文件**（避免污染最终 `content/post/<slug>/` 目录，也避免跨目录访问导致的权限拦截问题）。依赖默认会缓存到 `~/.cache/gen-cover-skill/`，不会写入文章目录。
 推荐流程：
 ```bash
 cd .cover-generator-<slug>
 PUPPETEER_SKIP_DOWNLOAD=1 node "<generate-cover Skill 安装路径>/scripts/index.js" -t "文章标题" -s "文章摘要" -l "标签" -a "作者" -c 6 -d classic -o cover.png --cache-dir ./.cover-generator-<slug>
 ```
 生成完成后将获得该临时目录中的 `cover.png` 绝对路径。
-2. **调用 `qiniu-kodo` Skill**：将上面生成的封面图片绝对路径传递给 `qiniu-kodo` Skill 上传到七牛云图床。同样推荐加上 `--cache-dir ./.cover-generator-<slug>` 以复用临时目录存储 `qiniu-kodo` 的运行时依赖。注意上传时 `key` 的前缀应该统一使用 `image/` 而不是 `cover/`，例如 `image/<slug>-cover.png`，并获取上传后的公开 URL。
-3. **回填 `image` 字段**：将获取到的图床 URL 写入到文章 Front Matter 的 `image` 字段中。
-4. **清理临时文件**：上传完毕后，请务必删除步骤 1 中创建的临时目录（例如 `.cover-generator-<slug>`），保持系统整洁。确保最终用户的 `content/post/<slug>/` 目录下只有 `index.md`（以及必要的图片资源，如果有的话），不能包含 `index.js`、`package.json`、`node_modules` 等生成脚本文件。
+3. **调用 `qiniu-kodo` Skill**：将上面生成的封面图片绝对路径传递给 `qiniu-kodo` Skill 上传到七牛云图床。同样推荐加上 `--cache-dir ./.cover-generator-<slug>` 以复用临时目录存储 `qiniu-kodo` 的运行时依赖。注意上传时 `key` 的前缀应该统一使用 `image/` 而不是 `cover/`，例如 `image/<slug>-cover.png`，并获取上传后的公开 URL。
+4. **清理临时文件**：上传完毕后，请务必删除步骤 2 中创建的临时目录（例如 `.cover-generator-<slug>`），保持系统整洁。
 
 ### 5. 保存与输出
-必须将生成的文章内容写入文件中，遵循以下路径规则：
+当获取到图床 URL 后，将 `image` 字段填入 Front Matter，并一次性完整输出 Front Matter 和文章正文，将其写入文件中，遵循以下路径规则：
 - 若用户指定了路径，则使用用户指定的路径。
 - 若用户未指定路径，则默认使用 `content/post/<slug>/index.md`（必须创建一个以 `slug` 命名的文件夹，并将文件命名为 `index.md`）。
 
