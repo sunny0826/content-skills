@@ -93,7 +93,7 @@ user-invocable: true
 
 ### 4. 生成封面并上传图床
 在完成文章正文和 Front Matter 的编写后，你需要为该文章生成并配置封面图：
-1. **调用 `generate-cover` Skill**：根据文章的 `title`、`description`（作为 subtitle）、`tags`/`categories`（作为 label）以及作者等信息，调用 `generate-cover` Skill 生成封面图。**由于在同一目录下生成临时文件可能会污染用户最终的文章目录，请务必指定一个专门的系统临时目录（例如 `/tmp/cover-generator-<slug>`）来存放和执行生成脚本当中的内容。**生成完成后将获得该临时目录中的 `cover.png` 绝对路径。
+1. **调用 `generate-cover` Skill**：根据文章的 `title`、`description`（作为 subtitle）、`tags`/`categories`（作为 label）以及作者等信息，调用 `generate-cover` Skill 生成封面图。**由于在同一目录下生成临时文件可能会污染用户最终的文章目录，请务必在文章生成所在项目根目录或当前工作目录下一个名为 `.cover-generator-<slug>` 的隐藏文件夹来存放和执行生成脚本当中的内容（避免跨目录访问导致的权限拦截问题）。**生成完成后将获得该临时目录中的 `cover.png` 绝对路径。
 注意：为了提高执行速度，建议使用系统全局安装或环境中已有的依赖。你可以在运行环境配置全局变量或执行前检查：
 ```bash
 export NODE_PATH=$(npm root -g) || export NODE_PATH=$(pnpm root -g)
@@ -102,7 +102,7 @@ export NODE_PATH=$(npm root -g) || export NODE_PATH=$(pnpm root -g)
 如果确实无法找到依赖，可以尝试 `npm i puppeteer commander --no-save`。
 2. **调用 `qiniu-kodo` Skill**：将上面生成的封面图片绝对路径传递给 `qiniu-kodo` Skill 上传到七牛云图床。注意上传时 `key` 的前缀应该统一使用 `image/` 而不是 `cover/`，例如 `image/<slug>-cover.png`，并获取上传后的公开 URL。
 3. **回填 `image` 字段**：将获取到的图床 URL 写入到文章 Front Matter 的 `image` 字段中。
-4. **清理临时文件**：上传完毕后，请务必删除步骤 1 中创建的临时目录（例如 `/tmp/cover-generator-<slug>`），保持系统整洁。确保最终用户的 `content/post/<slug>/` 目录下只有 `index.md`（以及必要的图片资源，如果有的话），不能包含 `index.js`、`package.json`、`node_modules` 等生成脚本文件。
+4. **清理临时文件**：上传完毕后，请务必删除步骤 1 中创建的临时目录（例如 `.cover-generator-<slug>`），保持系统整洁。确保最终用户的 `content/post/<slug>/` 目录下只有 `index.md`（以及必要的图片资源，如果有的话），不能包含 `index.js`、`package.json`、`node_modules` 等生成脚本文件。
 
 ### 5. 保存与输出
 必须将生成的文章内容写入文件中，遵循以下路径规则：

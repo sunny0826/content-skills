@@ -9,7 +9,7 @@
    ```
 3. (可选) 将工具链接到全局：
    ```bash
-   pnpm link
+   pnpm link -g
    ```
 
 ## 使用
