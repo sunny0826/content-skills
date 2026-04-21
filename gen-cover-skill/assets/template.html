@@ -4,11 +4,15 @@
   <meta charset="UTF-8">
   <title>Cover Template</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
-    
+    @font-face {
+      font-family: 'ChillMatrixBlack';
+      src: url('https://guoxudong.io/fonts/ChillMatrixBlack.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      font-family: 'ChillMatrixBlack', system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
@@ -46,8 +50,18 @@
       position: absolute;
       inset: 0;
       background:
+        radial-gradient(ellipse 45cqi 60cqi at 70% 35%, rgba(255, 255, 255, 0.06) 0%, transparent 65%),
         radial-gradient(ellipse 60cqi 80cqi at 15% 50%, var(--c-glow1) 0%, transparent 70%),
-        radial-gradient(ellipse 40cqi 60cqi at 85% 30%, var(--c-glow2) 0%, transparent 70%);
+        radial-gradient(ellipse 40cqi 60cqi at 85% 30%, var(--c-glow2) 0%, transparent 70%),
+        radial-gradient(ellipse 35cqi 35cqi at 85% 70%, rgba(255, 255, 255, 0.05) 0%, transparent 70%),
+        conic-gradient(from 210deg at 65% 45%, rgba(255, 255, 255, 0.08), transparent 45%, rgba(255, 255, 255, 0.06), transparent 80%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.02) 0px,
+          rgba(255, 255, 255, 0.02) 1px,
+          transparent 1px,
+          transparent 6px
+        );
       filter: blur(60px);
       z-index: 0;
     }
@@ -56,7 +70,12 @@
       content: '';
       position: absolute;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.085)' stroke-width='1'%3E%3Cpath d='M10 44H64V14'/%3E%3Cpath d='M64 14H118V36'/%3E%3Cpath d='M118 36H150'/%3E%3Cpath d='M22 112H62V150'/%3E%3Cpath d='M62 150H106V124'/%3E%3Cpath d='M106 124H150'/%3E%3Cpath d='M22 78H90V60H132'/%3E%3Cpath d='M90 60V22'/%3E%3C/g%3E%3Cg fill='rgba(255,255,255,0.14)'%3E%3Ccircle cx='64' cy='14' r='2'/%3E%3Ccircle cx='118' cy='36' r='2'/%3E%3Ccircle cx='90' cy='60' r='2'/%3E%3Ccircle cx='62' cy='150' r='2'/%3E%3Ccircle cx='106' cy='124' r='2'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat, repeat;
+      background-size: auto, 160px 160px;
+      background-position: 0 0, 0 0;
       pointer-events: none;
       z-index: 10;
       mix-blend-mode: overlay;
@@ -144,7 +163,7 @@
 
     .deco-code {
       position: absolute; right: 3cqi; top: 50%; transform: translateY(-50%);
-      font-family: monospace; font-size: 1.3cqi; line-height: 1.9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 1.3cqi; line-height: 1.9;
       color: rgba(239, 68, 68, 0.12); text-align: right;
     }
 

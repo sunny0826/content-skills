@@ -95,7 +95,13 @@ program
     
     const launchOptions = {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-gpu',
+        '--disable-web-security', // 允许跨域加载字体
+        '--font-render-hinting=none' // 优化字体渲染
+      ]
     };
     if (executablePath) {
       console.log(`已检测到系统 Chrome，路径: ${executablePath}`);
@@ -108,6 +114,10 @@ program
       const browser = await puppeteer.launch(launchOptions);
       
       const page = await browser.newPage();
+      
+      // 捕获页面日志
+      page.on('console', msg => console.log('[Page]', msg.text()));
+      page.on('pageerror', err => console.error('[Page Error]', err));
       
       // Set viewport to the cover size
       await page.setViewport({ width: 1200, height: 480, deviceScaleFactor: 2 });
@@ -126,7 +136,14 @@ program
       const fullUrl = `${fileUrl}?${params.toString()}`;
       
       console.log('加载模板并渲染...');
-      await page.goto(fullUrl, { waitUntil: 'domcontentloaded' });
+      await page.goto(fullUrl, { waitUntil: 'networkidle0', timeout: 30000 });
+      
+      console.log('等待字体加载...');
+      // 增加强行触发渲染字体的逻辑，确保无头浏览器下载 OTF
+      await page.evaluate(async () => {
+        document.body.style.fontFamily = "'ChillMatrixBlack', sans-serif";
+        await document.fonts.ready;
+      });
       
       await page.waitForSelector('#render-ready', { timeout: 10000 });
       
