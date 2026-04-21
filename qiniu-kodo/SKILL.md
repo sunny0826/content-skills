@@ -2,17 +2,16 @@
 name: qiniu-kodo
 description: |
   七牛云 KODO 对象存储技能。支持文件上传、下载、列出、删除、获取 URL 等操作。
-  三层架构：MCP 工具（优先）→ Node.js SDK → qshell CLI。
+  使用 Node.js SDK 和 qshell CLI 适配各大 AI Agent 平台。
 metadata:
   {
     "openclaw":
       {
         "emoji": "☁️",
-        "requires": { "bins": ["node", "python3", "pip3"], "packages": ["qiniu", "qiniu-mcp-server"] },
+        "requires": { "bins": ["node", "python3", "pip3"] },
         "install":
           [
             { "id": "qiniu-sdk", "kind": "node", "package": "qiniu", "label": "Install qiniu Node.js SDK" },
-            { "id": "qiniu-mcp", "kind": "python", "package": "qiniu-mcp-server", "label": "Install qiniu-mcp-server" },
           ],
       },
   }
@@ -20,17 +19,16 @@ metadata:
 
 # ☁️ 七牛云 KODO 技能
 
-通过 **MCP 工具** / **Node.js SDK** / **qshell CLI** 管理七牛云对象存储。
+通过 **Node.js SDK** / **qshell CLI** 轻松管理七牛云对象存储，适配各大主流 AI Agent 平台及 OpenClaw。
 
 ---
 
-## 🎯 执行策略（三层降级）
+## 🎯 执行策略
 
 | 优先级 | 工具 | 使用场景 |
 |--------|------|----------|
-| **1** | `qiniu-mcp-server` | 功能最全，优先使用 |
-| **2** | Node.js SDK | MCP 不可用时降级 |
-| **3** | qshell CLI | 最后备选 |
+| **1** | Node.js SDK | 推荐方式，通过脚本稳定调用 |
+| **2** | qshell CLI | 辅助备选，适用于复杂批量场景 |
 
 ---
 
@@ -71,37 +69,37 @@ node scripts/qiniu_node.mjs test-connection
 ```bash
 node scripts/qiniu_node.mjs upload \
   --local "/path/to/file.txt" \
-  --key "uploads/file.txt"
+  --key "image/file.txt"
 ```
 
 ### 列出文件
 
 ```bash
-node scripts/qiniu_node.mjs list --prefix "uploads/" --limit 100
+node scripts/qiniu_node.mjs list --prefix "image/" --limit 100
 ```
 
 ### 下载文件
 
 ```bash
 node scripts/qiniu_node.mjs download \
-  --key "uploads/file.txt" \
+  --key "image/file.txt" \
   --local "/path/to/save.txt"
 ```
 
 ### 删除文件
 
 ```bash
-node scripts/qiniu_node.mjs delete --key "uploads/file.txt" --force
+node scripts/qiniu_node.mjs delete --key "image/file.txt" --force
 ```
 
 ### 获取文件 URL
 
 ```bash
 # 公开空间
-node scripts/qiniu_node.mjs url --key "uploads/file.txt"
+node scripts/qiniu_node.mjs url --key "image/file.txt"
 
 # 私有空间（1小时有效）
-node scripts/qiniu_node.mjs url --key "uploads/file.txt" --private --expires 3600
+node scripts/qiniu_node.mjs url --key "image/file.txt" --private --expires 3600
 ```
 
 ---

@@ -50,3 +50,5 @@ gen-cover/node_modules
 gen-cover/test_classic.png
 gen-cover/test_cyberpunk.png
 gen-cover/test_sphere.png
+qiniu-kodo/config/qiniu-config.json
+qiniu-kodo/node_modules

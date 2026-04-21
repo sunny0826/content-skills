@@ -36,11 +36,16 @@ description: |
 1. **准备脚本与模板**：
    从本 Skill 的 `assets` 目录中，将 `index.js`、`template.html` 和 `package.json` 复制到用户指定的工作目录（如果未指定，则在当前目录创建一个 `cover-generator` 文件夹）。
 
-2. **安装依赖**：
-   进入工作目录，执行以下命令安装依赖：
+2. **依赖检查**：
+   由于生成封面依赖 `puppeteer` 和 `commander`，为了提高执行速度和稳定性，推荐**优先使用系统全局安装的依赖**。在 Node.js 中，如果包已全局安装，你可以在命令前设置环境变量 `NODE_PATH` 使其能够解析全局模块。
+   
+   例如，如果你使用 `npm` 或 `pnpm` 全局安装过依赖，可以直接在执行前动态获取全局路径：
    ```bash
-   npm install puppeteer commander
+   export NODE_PATH=$(npm root -g) || export NODE_PATH=$(pnpm root -g)
    ```
+   *注意：如果你使用 `pnpm link`，必须提供具体的包名（例如 `pnpm link -g puppeteer commander`），不要直接使用不带参数的 `pnpm link`。*
+   如果环境变量配置后仍提示找不到模块，再降级使用本地安装（`npm i puppeteer commander --no-save`）。
+   
    *注意：如果在 Mac 环境下遇到 Puppeteer 启动失败的问题，脚本已经内置了调用本地 Chrome 的兼容逻辑。*
 
 3. **执行生成命令**：
@@ -50,7 +55,10 @@ description: |
    node index.js -t "用户标题" -s "副标题" -l "标签" -a "作者" -c 6 -d cyberpunk -o cover.png
    ```
 
-4. **完成与展示**：
+4. **清理环境**（可选但推荐）：
+   如果是作为管道节点被其他 Skill（如 `content-creator`）调用，你应该在生成成功并交接文件路径后，删除运行所产生的临时代码文件（`index.js`, `template.html`, `package.json`, `node_modules` 等），避免污染用户的工作区。
+
+5. **完成与展示**：
    生成完成后，告知用户图片已成功保存，并提供图片的文件路径供用户预览。
 
 ## 注意事项

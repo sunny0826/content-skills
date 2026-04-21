@@ -26,24 +26,56 @@ const CONFIG_FILE = path.join(CONFIG_DIR, 'qiniu-config.json');
  * 加载配置文件
  */
 function loadConfig() {
-  if (!fs.existsSync(CONFIG_FILE)) {
-    throw new Error(
-      `配置文件不存在: ${CONFIG_FILE}\n` +
-      `请复制 config/qiniu-config.example.json 为 qiniu-config.json 并填写配置`
-    );
+  let configPath = CONFIG_FILE;
+  
+  // 检查 qiniu-kodo/config/qiniu-config.json
+  if (fs.existsSync(configPath)) {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const required = ['accessKey', 'secretKey', 'bucket'];
+    let valid = true;
+    for (const key of required) {
+      if (!config[key] || config[key].startsWith('你的')) {
+        valid = false;
+        break;
+      }
+    }
+    if (valid) return config;
+  }
+  
+  // 备用检查路径：尝试找有没有错误嵌套的路径 qiniu-kodo/config/qiniu-kodo/config/qiniu-config.json
+  const altConfigPath = path.join(CONFIG_DIR, 'qiniu-kodo', 'config', 'qiniu-config.json');
+  if (fs.existsSync(altConfigPath)) {
+    const config = JSON.parse(fs.readFileSync(altConfigPath, 'utf-8'));
+    const required = ['accessKey', 'secretKey', 'bucket'];
+    let valid = true;
+    for (const key of required) {
+      if (!config[key] || config[key].startsWith('你的')) {
+        valid = false;
+        break;
+      }
+    }
+    if (valid) return config;
   }
 
-  const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+  // 降级使用环境变量
+  const envConfig = {
+    accessKey: process.env.QINIU_ACCESS_KEY,
+    secretKey: process.env.QINIU_SECRET_KEY,
+    bucket: process.env.QINIU_BUCKET || 'guoxudong-io',
+    region: process.env.QINIU_REGION || 'z0',
+    domain: process.env.QINIU_DOMAIN || ''
+  };
 
-  // 验证必填配置
   const required = ['accessKey', 'secretKey', 'bucket'];
   for (const key of required) {
-    if (!config[key] || config[key].startsWith('你的')) {
-      throw new Error(`配置项 ${key} 不能为空或使用示例值`);
+    if (!envConfig[key]) {
+      throw new Error(
+        `配置未找到: 既没有有效的 ${CONFIG_FILE}，也没有对应的环境变量 QINIU_ACCESS_KEY/QINIU_SECRET_KEY`
+      );
     }
   }
 
-  return config;
+  return envConfig;
 }
 
 /**
@@ -72,7 +104,8 @@ class QiniuKodo {
       'z1': 'https://upload-z1.qiniup.com',
       'z2': 'https://upload-z2.qiniup.com',
       'na0': 'https://upload-na0.qiniup.com',
-      'as0': 'https://upload-as0.qiniup.com'
+      'as0': 'https://upload-as0.qiniup.com',
+      'cn-east-2': 'https://upload-cn-east-2.qiniup.com'
     };
     return hosts[region] || hosts['z0'];
   }
@@ -90,7 +123,14 @@ class QiniuKodo {
       const uploadToken = putPolicy.uploadToken(this.mac);
       
       const config = new qiniu.conf.Config();
-      config.zone = qiniu.zone.Zone_z0; // 根据区域设置
+      // 使用通用 Zone 避免 incorrect region 错误
+      config.zone = qiniu.zone.Zone_z0;
+      if (this.config.region === 'z1') config.zone = qiniu.zone.Zone_z1;
+      if (this.config.region === 'z2') config.zone = qiniu.zone.Zone_z2;
+      if (this.config.region === 'na0') config.zone = qiniu.zone.Zone_na0;
+      if (this.config.region === 'as0') config.zone = qiniu.zone.Zone_as0;
+      // cn-east-2 就是 z0 华东区域
+      if (this.config.region === 'cn-east-2') config.zone = qiniu.zone.Zone_z0;
       
       const formUploader = new qiniu.form_up.FormUploader(config);
       const putExtra = new qiniu.form_up.PutExtra();
