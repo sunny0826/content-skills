@@ -1,12 +1,12 @@
 {
   "name": "qiniu-kodo-skill",
   "version": "1.0.0",
-  "description": "七牛云 KODO 对象存储技能",
+  "description": "七牛云 KODO 图床上传技能（仅上传图片并返回 URL）",
   "main": "scripts/qiniu_node.mjs",
   "type": "module",
   "scripts": {
     "setup": "bash scripts/setup.sh",
-    "test": "node scripts/qiniu_node.mjs test-connection"
+    "test": "node scripts/qiniu_node.mjs --help"
   },
   "dependencies": {
     "qiniu": "^7.14.0"

@@ -1,16 +1,10 @@
 # ☁️ 七牛云 KODO 技能
 
-一个通用的七牛云对象存储（KODO）管理技能，适配各大主流 AI Agent 平台及 OpenClaw。
+一个精简的七牛云 KODO 图床上传技能：用于将本地生成的图片（例如封面图）上传到七牛云并返回公开 URL。
 
 ## ✨ 功能
 
-- 📤 上传文件
-- 📥 下载文件
-- 📋 列出文件
-- 🗑️ 删除文件
-- 🔗 获取文件 URL（支持私有空间签名）
-- 📊 查看文件信息
-- 📁 移动/复制文件
+- 📤 上传图片并返回公开 URL
 
 ## 🚀 快速开始
 
@@ -18,8 +12,8 @@
 # 安装依赖
 npm install
 
-# 配置凭证
-# 或者你也可以直接配置环境变量 QINIU_ACCESS_KEY, QINIU_SECRET_KEY, QINIU_REGION, QINIU_BUCKET
+# 配置凭证 (会优先在 ~/.kodo-config/qiniu-config.json 生成配置)
+# 或者你也可以直接配置环境变量 QINIU_ACCESS_KEY, QINIU_SECRET_KEY, QINIU_REGION, QINIU_BUCKET, QINIU_DOMAIN
 bash scripts/setup.sh --access-key "xxx" --secret-key "xxx" --region "z0" --bucket "mybucket"
 
 # 测试连接
@@ -29,27 +23,18 @@ node scripts/qiniu_node.mjs test-connection
 ## 📖 使用示例
 
 ```bash
-# 上传
-node scripts/qiniu_node.mjs upload --local file.txt --key image/file.txt
+# 上传图片（默认输出单行 JSON，包含 url）
+node scripts/qiniu_node.mjs upload --local /abs/path/to/cover.png --key image/post-cover.png
 
-# 列出
-node scripts/qiniu_node.mjs list --prefix image/
-
-# 下载
-node scripts/qiniu_node.mjs download --key image/file.txt --local file.txt
-
-# 删除
-node scripts/qiniu_node.mjs delete --key image/file.txt --force
-
-# 获取 URL
-node scripts/qiniu_node.mjs url --key image/file.txt
+# 仅输出 URL（未配置 domain 时为空）
+node scripts/qiniu_node.mjs upload --local /abs/path/to/cover.png --key image/post-cover.png --format text
 ```
 
 ## 🔧 架构
 
 两层执行策略，保障环境兼容性：
 1. **Node.js SDK** (`qiniu`) - 稳定可靠，推荐作为首选脚本调用方式
-2. **qshell CLI** - 官方命令行工具，用于辅助与兜底
+2. **qshell CLI** - 可选安装（当前主流程不依赖）
 
 ## 📄 许可证
 

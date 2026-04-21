@@ -1,14 +1,14 @@
 ---
 name: qiniu-kodo
 description: |
-  七牛云 KODO 对象存储技能。支持文件上传、下载、列出、删除、获取 URL 等操作。
-  使用 Node.js SDK 和 qshell CLI 适配各大 AI Agent 平台。
+  七牛云 KODO 图床上传技能：将本地生成的图片（如封面图）上传到七牛云并返回公开 URL。
+  仅保留“上传图片”这一条主链路，适配 generate-cover / content-creator 等工作流。
 metadata:
   {
     "openclaw":
       {
         "emoji": "☁️",
-        "requires": { "bins": ["node", "python3", "pip3"] },
+        "requires": { "bins": ["node"] },
         "install":
           [
             { "id": "qiniu-sdk", "kind": "node", "package": "qiniu", "label": "Install qiniu Node.js SDK" },
@@ -17,112 +17,26 @@ metadata:
   }
 ---
 
-# ☁️ 七牛云 KODO 技能
+# ☁️ 七牛云 KODO 图床上传 Skill
 
-通过 **Node.js SDK** / **qshell CLI** 轻松管理七牛云对象存储，适配各大主流 AI Agent 平台及 OpenClaw。
+此 Skill 用于把本地生成的图片（最常见是封面 `cover.png`）上传到七牛云 KODO，并返回可用于 Hugo/Markdown 的公开 URL。
 
----
+## 你需要提供的信息
 
-## 🎯 执行策略
+- `local`：要上传的本地图片绝对路径（通常来自 generate-cover 的输出）
+- `key`：上传到 KODO 的对象 Key（推荐统一使用 `image/` 前缀，例如 `image/<slug>-cover.png`）
+- `domain`：用于拼接公开访问 URL 的 CDN 域名（强烈建议配置）
 
-| 优先级 | 工具 | 使用场景 |
-|--------|------|----------|
-| **1** | Node.js SDK | 推荐方式，通过脚本稳定调用 |
-| **2** | qshell CLI | 辅助备选，适用于复杂批量场景 |
+## 配置方式
 
----
+优先读取 `~/.kodo-config/qiniu-config.json`，其次读取 `qiniu-kodo/config/qiniu-config.json`（向后兼容），否则读取环境变量：
+- `QINIU_ACCESS_KEY`
+- `QINIU_SECRET_KEY`
+- `QINIU_BUCKET`
+- `QINIU_REGION`（可选，默认 `z0`）
+- `QINIU_DOMAIN`（可选，但若不配置则无法返回 `url`）
 
-## 🚀 快速开始
-
-### 1. 安装依赖
-
-```bash
-# 进入技能目录
-cd ~/.openclaw/workspace/skills/qiniu-kodo
-
-# 运行自动安装
-bash scripts/setup.sh
-```
-
-### 2. 配置凭证
-
-```bash
-bash scripts/setup.sh \
-  --access-key "YOUR_ACCESS_KEY" \
-  --secret-key "YOUR_SECRET_KEY" \
-  --region "z0" \
-  --bucket "mybucket"
-```
-
-### 3. 测试连接
-
-```bash
-node scripts/qiniu_node.mjs test-connection
-```
-
----
-
-## 📋 使用示例
-
-### 上传文件
-
-```bash
-node scripts/qiniu_node.mjs upload \
-  --local "/path/to/file.txt" \
-  --key "image/file.txt"
-```
-
-### 列出文件
-
-```bash
-node scripts/qiniu_node.mjs list --prefix "image/" --limit 100
-```
-
-### 下载文件
-
-```bash
-node scripts/qiniu_node.mjs download \
-  --key "image/file.txt" \
-  --local "/path/to/save.txt"
-```
-
-### 删除文件
-
-```bash
-node scripts/qiniu_node.mjs delete --key "image/file.txt" --force
-```
-
-### 获取文件 URL
-
-```bash
-# 公开空间
-node scripts/qiniu_node.mjs url --key "image/file.txt"
-
-# 私有空间（1小时有效）
-node scripts/qiniu_node.mjs url --key "image/file.txt" --private --expires 3600
-```
-
----
-
-## 🔧 Node.js SDK API
-
-| 命令 | 说明 |
-|------|------|
-| `upload --local <path> --key <key>` | 上传文件 |
-| `download --key <key> --local <path>` | 下载文件 |
-| `list [--prefix <p>] [--limit <n>]` | 列出文件 |
-| `delete --key <key> [--force]` | 删除文件 |
-| `url --key <key> [--private] [--expires <s>]` | 获取 URL |
-| `stat --key <key>` | 文件信息 |
-| `move --src-key <a> --dest-key <b>` | 移动文件 |
-| `copy --src-key <a> --dest-key <b>` | 复制文件 |
-| `test-connection` | 测试连接 |
-
----
-
-## ⚙️ 配置文件
-
-**config/qiniu-config.json**
+`~/.kodo-config/qiniu-config.json` 示例：
 
 ```json
 {
@@ -134,33 +48,32 @@ node scripts/qiniu_node.mjs url --key "image/file.txt" --private --expires 3600
 }
 ```
 
-**区域代码**：
-- `z0` - 华东（杭州）
-- `z1` - 华北（河北）
-- `z2` - 华南（广州）
-- `na0` - 北美（洛杉矶）
-- `as0` - 东南亚（新加坡）
+## 运行方式（唯一主流程：上传图片）
 
----
+```bash
+node scripts/qiniu_node.mjs upload \
+  --local "/abs/path/to/cover.png" \
+  --key "image/my-post-cover.png"
+```
 
-## 🐛 故障排查
+也可以不传 `--key`，此时会按 `--prefix` 与文件名自动生成：
 
-| 问题 | 解决 |
-|------|------|
-| `Cannot find module 'qiniu'` | `npm install qiniu` |
-| `401 Unauthorized` | 检查 AccessKey/SecretKey |
-| `连接超时` | 检查区域代码和网络 |
+```bash
+node scripts/qiniu_node.mjs upload \
+  --local "/abs/path/to/cover.png" \
+  --prefix "image/"
+```
 
----
+## 输出格式
 
-## 📚 相关链接
+默认输出为单行 JSON，便于其它 Skill/Agent 稳定解析：
 
-- [七牛云 MCP Server](https://github.com/qiniu/qiniu-mcp-server)
-- [七牛云 Node.js SDK](https://developer.qiniu.com/kodo/sdk/1289/nodejs)
-- [qshell 工具](https://developer.qiniu.com/kodo/tools/1302/qshell)
+```json
+{"success":true,"key":"image/my-post-cover.png","hash":"...","url":"https://cdn.example.com/image/my-post-cover.png","size":12345,"bucket":"mybucket"}
+```
 
----
+如需仅输出 URL，可加 `--format text`（若未配置 domain，则输出为空行）：
 
-## 📄 许可证
-
-MIT License
+```bash
+node scripts/qiniu_node.mjs upload --local "/abs/path/to/cover.png" --key "image/x.png" --format text
+```

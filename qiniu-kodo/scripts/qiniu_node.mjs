@@ -1,86 +1,65 @@
 #!/usr/bin/env node
-
-/**
- * 七牛云 KODO Node.js SDK 脚本
- * 功能：文件上传、下载、列出、删除、获取URL等操作
- */
-
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import https from 'https';
-import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 尝试加载 qiniu SDK
 import qiniu from 'qiniu';
+import os from 'os';
 
 // 配置文件路径
 const SKILL_DIR = path.dirname(__dirname);
 const CONFIG_DIR = path.join(SKILL_DIR, 'config');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'qiniu-config.json');
 
-/**
- * 加载配置文件
- */
 function loadConfig() {
   let configPath = CONFIG_FILE;
   
   // 检查 qiniu-kodo/config/qiniu-config.json
   if (fs.existsSync(configPath)) {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    const required = ['accessKey', 'secretKey', 'bucket'];
-    let valid = true;
-    for (const key of required) {
-      if (!config[key] || config[key].startsWith('你的')) {
-        valid = false;
-        break;
-      }
-    }
-    if (valid) return config;
+    if (isValidConfig(config)) return normalizeConfig(config);
   }
   
-  // 备用检查路径：尝试找有没有错误嵌套的路径 qiniu-kodo/config/qiniu-kodo/config/qiniu-config.json
-  const altConfigPath = path.join(CONFIG_DIR, 'qiniu-kodo', 'config', 'qiniu-config.json');
+  // 备用检查路径：尝试找 ~/.kodo-config/qiniu-config.json
+  const altConfigPath = path.join(os.homedir(), '.kodo-config', 'qiniu-config.json');
   if (fs.existsSync(altConfigPath)) {
     const config = JSON.parse(fs.readFileSync(altConfigPath, 'utf-8'));
-    const required = ['accessKey', 'secretKey', 'bucket'];
-    let valid = true;
-    for (const key of required) {
-      if (!config[key] || config[key].startsWith('你的')) {
-        valid = false;
-        break;
-      }
-    }
-    if (valid) return config;
+    if (isValidConfig(config)) return normalizeConfig(config);
   }
 
-  // 降级使用环境变量
-  const envConfig = {
+  const envConfig = normalizeConfig({
     accessKey: process.env.QINIU_ACCESS_KEY,
     secretKey: process.env.QINIU_SECRET_KEY,
     bucket: process.env.QINIU_BUCKET || 'guoxudong-io',
     region: process.env.QINIU_REGION || 'z0',
     domain: process.env.QINIU_DOMAIN || ''
-  };
+  });
 
-  const required = ['accessKey', 'secretKey', 'bucket'];
-  for (const key of required) {
-    if (!envConfig[key]) {
-      throw new Error(
-        `配置未找到: 既没有有效的 ${CONFIG_FILE}，也没有对应的环境变量 QINIU_ACCESS_KEY/QINIU_SECRET_KEY`
-      );
-    }
-  }
+  if (isValidConfig(envConfig)) return envConfig;
 
-  return envConfig;
+  throw new Error(
+    `配置未找到: 既没有有效的 ${CONFIG_FILE}，也没有对应的环境变量 QINIU_ACCESS_KEY/QINIU_SECRET_KEY/QINIU_BUCKET`
+  );
 }
 
-/**
- * 七牛云 KODO 操作类
- */
+function normalizeConfig(config) {
+  return {
+    accessKey: config.accessKey,
+    secretKey: config.secretKey,
+    bucket: config.bucket,
+    region: config.region || 'z0',
+    domain: config.domain || ''
+  };
+}
+
+function isValidConfig(config) {
+  const required = ['accessKey', 'secretKey', 'bucket'];
+  return required.every((k) => typeof config?.[k] === 'string' && config[k].trim() && !config[k].startsWith('你的'));
+}
+
 class QiniuKodo {
   constructor(config) {
     this.config = config;
@@ -88,31 +67,8 @@ class QiniuKodo {
     this.bucketManager = new qiniu.rs.BucketManager(this.mac);
     this.bucket = config.bucket;
     this.domain = config.domain || '';
-    
-    // 配置上传选项
-    this.uploadOptions = {
-      uphost: this.getUpHost(config.region)
-    };
   }
 
-  /**
-   * 获取上传域名
-   */
-  getUpHost(region) {
-    const hosts = {
-      'z0': 'https://upload.qiniup.com',
-      'z1': 'https://upload-z1.qiniup.com',
-      'z2': 'https://upload-z2.qiniup.com',
-      'na0': 'https://upload-na0.qiniup.com',
-      'as0': 'https://upload-as0.qiniup.com',
-      'cn-east-2': 'https://upload-cn-east-2.qiniup.com'
-    };
-    return hosts[region] || hosts['z0'];
-  }
-
-  /**
-   * 上传文件
-   */
   async upload(localPath, key) {
     if (!fs.existsSync(localPath)) {
       throw new Error(`文件不存在: ${localPath}`);
@@ -123,14 +79,7 @@ class QiniuKodo {
       const uploadToken = putPolicy.uploadToken(this.mac);
       
       const config = new qiniu.conf.Config();
-      // 使用通用 Zone 避免 incorrect region 错误
-      config.zone = qiniu.zone.Zone_z0;
-      if (this.config.region === 'z1') config.zone = qiniu.zone.Zone_z1;
-      if (this.config.region === 'z2') config.zone = qiniu.zone.Zone_z2;
-      if (this.config.region === 'na0') config.zone = qiniu.zone.Zone_na0;
-      if (this.config.region === 'as0') config.zone = qiniu.zone.Zone_as0;
-      // cn-east-2 就是 z0 华东区域
-      if (this.config.region === 'cn-east-2') config.zone = qiniu.zone.Zone_z0;
+      config.zone = resolveZone(this.config.region);
       
       const formUploader = new qiniu.form_up.FormUploader(config);
       const putExtra = new qiniu.form_up.PutExtra();
@@ -146,8 +95,9 @@ class QiniuKodo {
             success: true,
             key: respBody.key,
             hash: respBody.hash,
-            url: this.domain ? this.getUrl(key) : null,
-            size: fs.statSync(localPath).size
+            url: this.domain ? buildPublicUrl(this.domain, respBody.key) : null,
+            size: fs.statSync(localPath).size,
+            bucket: this.bucket
           });
         } else {
           reject(new Error(`上传失败: ${respInfo.statusCode} ${JSON.stringify(respBody)}`));
@@ -156,381 +106,130 @@ class QiniuKodo {
     });
   }
 
-  /**
-   * 下载文件
-   */
-  async download(key, localPath) {
-    const url = this.getUrl(key, true);
-    
+  async testConnection() {
     return new Promise((resolve, reject) => {
-      const protocol = url.startsWith('https') ? https : http;
-      
-      protocol.get(url, (response) => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`下载失败: ${response.statusCode}`));
-          return;
-        }
-        
-        // 创建目录
-        const dir = path.dirname(localPath);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        
-        const fileStream = fs.createWriteStream(localPath);
-        response.pipe(fileStream);
-        
-        fileStream.on('finish', () => {
-          fileStream.close();
-          resolve({
-            success: true,
-            key: key,
-            size: fs.statSync(localPath).size
-          });
-        });
-      }).on('error', reject);
-    });
-  }
-
-  /**
-   * 列出文件
-   */
-  async listFiles(prefix = '', limit = 100) {
-    return new Promise((resolve, reject) => {
-      this.bucketManager.listPrefix(this.bucket, {
-        prefix: prefix,
-        limit: limit
-      }, (err, respBody, respInfo) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        if (respInfo.statusCode === 200) {
-          const files = respBody.items.map(item => ({
-            key: item.key,
-            size: item.fsize,
-            mtime: item.putTime / 1000000,
-            hash: item.hash,
-            mimeType: item.mimeType
-          }));
-          resolve(files);
-        } else {
-          reject(new Error(`列出文件失败: ${respInfo.statusCode}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * 删除文件
-   */
-  async delete(key) {
-    return new Promise((resolve, reject) => {
-      this.bucketManager.delete(this.bucket, key, (err, respBody, respInfo) => {
-        if (err) {
-          if (respInfo && respInfo.statusCode === 612) {
-            reject(new Error(`文件不存在: ${key}`));
-          } else {
+      this.bucketManager.listPrefix(
+        this.bucket,
+        { prefix: '', limit: 1 },
+        (err, respBody, respInfo) => {
+          if (err) {
             reject(err);
+            return;
           }
-          return;
-        }
-        
-        if (respInfo.statusCode === 200) {
-          resolve({ success: true, key: key });
-        } else {
-          reject(new Error(`删除失败: ${respInfo.statusCode}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * 批量删除
-   */
-  async batchDelete(keys) {
-    const deleteOperations = keys.map(key => 
-      qiniu.rs.deleteOp(this.bucket, key)
-    );
-    
-    return new Promise((resolve, reject) => {
-      this.bucketManager.batch(deleteOperations, (err, respBody, respInfo) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        let success = 0;
-        let failed = 0;
-        
-        respBody.forEach(item => {
-          if (item.code === 200) {
-            success++;
+          if (respInfo.statusCode === 200) {
+            resolve({ success: true, bucket: this.bucket, count: (respBody?.items || []).length });
           } else {
-            failed++;
+            reject(new Error(`连接验证失败: ${respInfo.statusCode}`));
           }
-        });
-        
-        resolve({ success, failed });
-      });
-    });
-  }
-
-  /**
-   * 获取文件信息
-   */
-  async stat(key) {
-    return new Promise((resolve, reject) => {
-      this.bucketManager.stat(this.bucket, key, (err, respBody, respInfo) => {
-        if (err) {
-          reject(err);
-          return;
         }
-        
-        if (respInfo.statusCode === 200) {
-          resolve({
-            key: key,
-            size: respBody.fsize,
-            hash: respBody.hash,
-            mimeType: respBody.mimeType,
-            mtime: respBody.putTime / 1000000
-          });
-        } else {
-          reject(new Error(`获取文件信息失败: ${respInfo.statusCode}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * 获取文件 URL
-   */
-  getUrl(key, isPrivate = false, expires = 3600) {
-    if (!this.domain) {
-      throw new Error('配置中缺少 domain 字段');
-    }
-
-    const baseUrl = `${this.domain}/${key}`;
-
-    if (isPrivate) {
-      const deadline = Math.floor(Date.now() / 1000) + expires;
-      const sign = qiniu.util.hmacSha1(baseUrl, this.mac.secretKey);
-      const encodedSign = qiniu.util.base64ToUrlSafe(sign);
-      const downloadToken = `${this.mac.accessKey}:${encodedSign}`;
-      return `${baseUrl}?e=${deadline}&token=${downloadToken}`;
-    } else {
-      return baseUrl;
-    }
-  }
-
-  /**
-   * 移动文件
-   */
-  async move(srcKey, destKey, force = false) {
-    return new Promise((resolve, reject) => {
-      this.bucketManager.move(this.bucket, srcKey, this.bucket, destKey, { force }, (err, respBody, respInfo) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        if (respInfo.statusCode === 200) {
-          resolve({
-            success: true,
-            srcKey: srcKey,
-            destKey: destKey
-          });
-        } else {
-          reject(new Error(`移动失败: ${respInfo.statusCode}`));
-        }
-      });
-    });
-  }
-
-  /**
-   * 复制文件
-   */
-  async copy(srcKey, destKey, force = false) {
-    return new Promise((resolve, reject) => {
-      this.bucketManager.copy(this.bucket, srcKey, this.bucket, destKey, { force }, (err, respBody, respInfo) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        if (respInfo.statusCode === 200) {
-          resolve({
-            success: true,
-            srcKey: srcKey,
-            destKey: destKey
-          });
-        } else {
-          reject(new Error(`复制失败: ${respInfo.statusCode}`));
-        }
-      });
+      );
     });
   }
 }
 
-// 工具函数
-function formatSize(bytes) {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let size = bytes;
-  let unitIndex = 0;
-  
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-  
-  return `${size.toFixed(2)} ${units[unitIndex]}`;
+function resolveZone(region) {
+  if (region === 'cn-east-2') return qiniu.zone.Zone_cn_east_2;
+  if (region === 'z1') return qiniu.zone.Zone_z1;
+  if (region === 'z2') return qiniu.zone.Zone_z2;
+  if (region === 'na0') return qiniu.zone.Zone_na0;
+  if (region === 'as0') return qiniu.zone.Zone_as0;
+  return qiniu.zone.Zone_z0;
 }
 
-function formatTime(timestamp) {
-  const date = new Date(timestamp * 1000);
-  return date.toISOString().replace('T', ' ').substring(0, 19);
+function buildPublicUrl(domain, key) {
+  const d = String(domain || '').replace(/\/+$/, '');
+  const k = String(key || '').replace(/^\/+/, '');
+  return `${d}/${k}`;
 }
 
-// 命令行接口
+function readFlag(args, name) {
+  const idx = args.indexOf(name);
+  if (idx === -1) return null;
+  return args[idx + 1] ?? null;
+}
+
+function hasFlag(args, name) {
+  return args.includes(name);
+}
+
+function normalizeKey(key) {
+  return String(key || '')
+    .replaceAll('\\', '/')
+    .replace(/^\/+/, '');
+}
+
+function buildDefaultKey(localPath, prefix = 'image/') {
+  const p = prefix ? String(prefix).replaceAll('\\', '/').replace(/^\/+/, '') : '';
+  const finalPrefix = p.endsWith('/') ? p : `${p}/`;
+  return normalizeKey(`${finalPrefix}${path.basename(localPath)}`);
+}
+
+function printUsage() {
+  const lines = [
+    '用法:',
+    '  node scripts/qiniu_node.mjs upload --local <LocalPath> [--key <Key>] [--prefix <Prefix>] [--format json|text]',
+    '  node scripts/qiniu_node.mjs test-connection',
+    '',
+    '示例:',
+    '  node scripts/qiniu_node.mjs upload --local /tmp/cover.png --key image/post-cover.png',
+    '  node scripts/qiniu_node.mjs upload --local /tmp/cover.png --prefix image/',
+    '',
+    '说明:',
+    '  - 默认输出 json，便于其它 Skill/Agent 解析（包含 url/key/hash/size/bucket）',
+    '  - 若要返回公开 URL，请在 config/qiniu-config.json、~/.kodo-config/qiniu-config.json 或环境变量中配置 QINIU_DOMAIN'
+  ];
+  console.log(lines.join('\n'));
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
   
   try {
-    const config = loadConfig();
-    const kodo = new QiniuKodo(config);
-    
-    switch (command) {
-      case 'upload': {
-        const localPath = args[args.indexOf('--local') + 1];
-        const key = args[args.indexOf('--key') + 1];
-        const result = await kodo.upload(localPath, key);
-        console.log('✅ 上传成功!');
-        console.log(`  文件: ${result.key}`);
-        console.log(`  大小: ${formatSize(result.size)}`);
-        console.log(`  URL: ${result.url}`);
-        break;
-      }
-      
-      case 'download': {
-        const key = args[args.indexOf('--key') + 1];
-        const localPath = args[args.indexOf('--local') + 1];
-        const result = await kodo.download(key, localPath);
-        console.log('✅ 下载成功!');
-        console.log(`  文件: ${result.key}`);
-        console.log(`  大小: ${formatSize(result.size)}`);
-        console.log(`  保存到: ${localPath}`);
-        break;
-      }
-      
-      case 'list': {
-        const prefixIndex = args.indexOf('--prefix');
-        const prefix = prefixIndex !== -1 ? args[prefixIndex + 1] : '';
-        
-        const limitIndex = args.indexOf('--limit');
-        const limit = limitIndex !== -1 ? parseInt(args[limitIndex + 1]) : 100;
-        
-        const formatIndex = args.indexOf('--format');
-        const format = formatIndex !== -1 ? args[formatIndex + 1] : 'table';
-        
-        const files = await kodo.listFiles(prefix, limit);
-        
-        if (files.length === 0) {
-          console.log('📭 没有找到文件');
-          return;
-        }
-        
-        if (format === 'json') {
-          console.log(JSON.stringify(files, null, 2));
-        } else {
-          console.log(`📋 共 ${files.length} 个文件:\n`);
-          console.log(`${'文件名'.padEnd(50)} ${'大小'.padStart(12)} ${'修改时间'.padEnd(20)}`);
-          console.log('-'.repeat(82));
-          files.forEach(file => {
-            console.log(`${file.key.padEnd(50)} ${formatSize(file.size).padStart(12)} ${formatTime(file.mtime).padEnd(20)}`);
-          });
-        }
-        break;
-      }
-      
-      case 'delete': {
-        const key = args[args.indexOf('--key') + 1];
-        const forceIndex = args.indexOf('--force');
-        
-        if (forceIndex === -1) {
-          console.log(`⚠️  确定要删除 ${key} 吗？(y/N):`);
-          // 注意：这里需要 readline，为简化暂时跳过确认
-        }
-        
-        const result = await kodo.delete(key);
-        console.log('✅ 删除成功!');
-        console.log(`  文件: ${result.key}`);
-        break;
-      }
-      
-      case 'batch-delete': {
-        const fileIndex = args.indexOf('--file');
-        const listFile = args[fileIndex + 1];
-        
-        const keys = fs.readFileSync(listFile, 'utf-8')
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => line);
-        
-        const result = await kodo.batchDelete(keys);
-        console.log('✅ 批量删除完成!');
-        console.log(`  成功: ${result.success}`);
-        console.log(`  失败: ${result.failed}`);
-        break;
-      }
-      
-      case 'url': {
-        const key = args[args.indexOf('--key') + 1];
-        const privateIndex = args.indexOf('--private');
-        const expiresIndex = args.indexOf('--expires');
-        
-        const isPrivate = privateIndex !== -1;
-        const expires = expiresIndex !== -1 ? parseInt(args[expiresIndex + 1]) : 3600;
-        
-        const url = kodo.getUrl(key, isPrivate, expires);
-        console.log('🔗 文件 URL:');
-        console.log(`  ${url}`);
-        if (isPrivate) {
-          console.log(`\n  ⏱️  有效期: ${expires} 秒`);
-        }
-        break;
-      }
-      
-      case 'stat': {
-        const key = args[args.indexOf('--key') + 1];
-        const info = await kodo.stat(key);
-        console.log('📊 文件信息:\n');
-        console.log(`  文件名: ${info.key}`);
-        console.log(`  大小: ${formatSize(info.size)}`);
-        console.log(`  类型: ${info.mimeType}`);
-        console.log(`  Hash: ${info.hash}`);
-        console.log(`  修改时间: ${formatTime(info.mtime)}`);
-        break;
-      }
-      
-      case 'test-connection': {
-        await kodo.listFiles('', 1);
-        console.log('✅ 七牛云连接验证成功!');
-        break;
-      }
-      
-      default:
-        console.log('使用方法:');
-        console.log('  node qiniu_node.mjs upload --local <LocalPath> --key <Key>');
-        console.log('  node qiniu_node.mjs download --key <Key> --local <LocalPath>');
-        console.log('  node qiniu_node.mjs list [--prefix <Prefix>] [--limit <Limit>]');
-        console.log('  node qiniu_node.mjs delete --key <Key> [--force]');
-        console.log('  node qiniu_node.mjs url --key <Key> [--private] [--expires <Seconds>]');
-        console.log('  node qiniu_node.mjs stat --key <Key>');
-        console.log('  node qiniu_node.mjs test-connection');
+    if (!command || command === 'help' || command === '--help' || command === '-h') {
+      printUsage();
+      return;
     }
-    
+
+    if (command === 'upload') {
+      const localPath = readFlag(args, '--local');
+      if (!localPath) throw new Error('缺少参数 --local <LocalPath>');
+
+      const keyInput = readFlag(args, '--key');
+      const prefix = readFlag(args, '--prefix') || 'image/';
+      const key = normalizeKey(keyInput || buildDefaultKey(localPath, prefix));
+
+      const outputFormat = readFlag(args, '--format') || 'json';
+      const config = loadConfig();
+      const kodo = new QiniuKodo(config);
+      const result = await kodo.upload(localPath, key);
+
+      if (outputFormat === 'text') {
+        console.log(result.url || '');
+      } else {
+        console.log(JSON.stringify(result));
+      }
+      return;
+    }
+
+    if (command === 'test-connection') {
+      const outputFormat = readFlag(args, '--format') || 'json';
+      const config = loadConfig();
+      const kodo = new QiniuKodo(config);
+      const result = await kodo.testConnection();
+      if (outputFormat === 'text') {
+        console.log('ok');
+      } else {
+        console.log(JSON.stringify(result));
+      }
+      return;
+    }
+    if (hasFlag(args, '--help') || hasFlag(args, '-h')) {
+      printUsage();
+      return;
+    }
+
+    throw new Error(`未知命令: ${command}`);
   } catch (error) {
     console.error(`❌ 错误: ${error.message}`);
     process.exit(1);

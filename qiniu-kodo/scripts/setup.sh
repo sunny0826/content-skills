@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 CHECK_ONLY=false
 INSTALL_MCP=false
 INSTALL_SDK=false
+INSTALL_QSHELL=false
 ACCESS_KEY=""
 SECRET_KEY=""
 REGION=""
@@ -28,6 +29,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_DIR="$BASE_DIR/config"
 CONFIG_FILE="$CONFIG_DIR/qiniu-config.json"
+ALT_CONFIG_DIR="$HOME/.kodo-config"
+ALT_CONFIG_FILE="$ALT_CONFIG_DIR/qiniu-config.json"
 
 # 日志函数
 log_info() {
@@ -56,6 +59,10 @@ parse_args() {
                 ;;
             --install-sdk)
                 INSTALL_SDK=true
+                shift
+                ;;
+            --install-qshell)
+                INSTALL_QSHELL=true
                 shift
                 ;;
             --access-key)
@@ -312,9 +319,9 @@ install_qshell() {
 create_config() {
     log_info "创建配置文件..."
     
-    mkdir -p "$CONFIG_DIR"
-    
-    cat > "$CONFIG_FILE" <<EOF
+    # 优先尝试在 ~/.kodo-config 中创建
+    if mkdir -p "$ALT_CONFIG_DIR" 2>/dev/null; then
+        cat > "$ALT_CONFIG_FILE" <<EOF || true
 {
   "accessKey": "$ACCESS_KEY",
   "secretKey": "$SECRET_KEY",
@@ -331,11 +338,56 @@ create_config() {
   }
 }
 EOF
-    
-    # 设置权限
-    chmod 600 "$CONFIG_FILE"
-    
-    log_info "✅ 配置文件已创建: $CONFIG_FILE"
+        if [ -f "$ALT_CONFIG_FILE" ]; then
+            chmod 600 "$ALT_CONFIG_FILE" 2>/dev/null || true
+            log_info "✅ 配置文件已创建: $ALT_CONFIG_FILE"
+        else
+            log_warn "⚠️ 无法在 $ALT_CONFIG_DIR 创建配置文件，降级使用当前目录"
+            mkdir -p "$CONFIG_DIR"
+            cat > "$CONFIG_FILE" <<EOF
+{
+  "accessKey": "$ACCESS_KEY",
+  "secretKey": "$SECRET_KEY",
+  "bucket": "$BUCKET",
+  "region": "$REGION",
+  "domain": "$DOMAIN",
+  "options": {
+    "use_https": true,
+    "use_cdn": true,
+    "timeout": 30,
+    "upload_threshold": 4194304,
+    "chunk_size": 4194304,
+    "retry_times": 3
+  }
+}
+EOF
+            chmod 600 "$CONFIG_FILE" 2>/dev/null || true
+            log_info "✅ 配置文件已创建: $CONFIG_FILE"
+        fi
+    else
+        # 降级到技能目录内
+        log_warn "⚠️ 无法在 $ALT_CONFIG_DIR 创建配置文件目录，降级使用当前目录"
+        mkdir -p "$CONFIG_DIR"
+        cat > "$CONFIG_FILE" <<EOF
+{
+  "accessKey": "$ACCESS_KEY",
+  "secretKey": "$SECRET_KEY",
+  "bucket": "$BUCKET",
+  "region": "$REGION",
+  "domain": "$DOMAIN",
+  "options": {
+    "use_https": true,
+    "use_cdn": true,
+    "timeout": 30,
+    "upload_threshold": 4194304,
+    "chunk_size": 4194304,
+    "retry_times": 3
+  }
+}
+EOF
+        chmod 600 "$CONFIG_FILE" 2>/dev/null || true
+        log_info "✅ 配置文件已创建: $CONFIG_FILE"
+    fi
 }
 
 # 配置 shell 环境
@@ -445,21 +497,13 @@ full_setup() {
     fi
     
     # 安装 MCP（可选）
-    if ! check_mcp; then
-        log_info "是否安装 qiniu-mcp? [y/N]:"
-        read -r INSTALL_MCP_CHOICE
-        if [ "$INSTALL_MCP_CHOICE" = "y" ] || [ "$INSTALL_MCP_CHOICE" = "Y" ]; then
-            install_mcp
-        fi
+    if [ "$INSTALL_MCP" = "true" ] && ! check_mcp; then
+        install_mcp
     fi
     
     # 安装 qshell（可选）
-    if ! check_qshell; then
-        log_info "是否安装 qshell? [y/N]:"
-        read -r INSTALL_QSHELL_CHOICE
-        if [ "$INSTALL_QSHELL_CHOICE" = "y" ] || [ "$INSTALL_QSHELL_CHOICE" = "Y" ]; then
-            install_qshell
-        fi
+    if [ "$INSTALL_QSHELL" = "true" ] && ! check_qshell; then
+        install_qshell
     fi
     
     # 创建配置
