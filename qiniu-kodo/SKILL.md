@@ -53,8 +53,11 @@ metadata:
 ```bash
 node scripts/qiniu_node.mjs upload \
   --local "/abs/path/to/cover.png" \
-  --key "image/my-post-cover.png"
+  --key "image/my-post-cover.png" \
+  --cache-dir ./.qiniu-deps  # (可选) 自定义依赖缓存目录，默认 ~/.cache/qiniu-kodo-skill
 ```
+
+*提示：`qiniu-kodo` 使用了和 `gen-cover-skill` 一致的依赖管理策略，首次运行时会自动静默安装 `qiniu` 依赖并进行缓存，不再需要手动执行 `npm install`。*
 
 也可以不传 `--key`，此时会按 `--prefix` 与文件名自动生成：
 

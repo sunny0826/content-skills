@@ -1,5 +1,8 @@
 # gen-cover
 
+这里的内容是 `gen-cover` 工具源码与模板资源，主要用于本地开发/调试。
+如果你是在调用 `generate-cover` Skill，请以 [gen-cover-skill/SKILL.md](file:///Users/guoxudong/codes/content-skills/gen-cover-skill/SKILL.md) 的执行流程为准。
+
 ## 安装
 
 1. 确保安装了 Node.js (v16+)
@@ -33,6 +36,7 @@ gen-cover -t "快速开始" -c 12 -d sphere
 - `-c, --scheme <number>`: 配色方案 (0-12)，默认为 6 (海蓝渐变)
 - `-d, --deco <string>`: 装饰风格 (classic / cyberpunk / sphere / minimal)，默认为 classic
 - `-o, --output <string>`: 输出文件路径，默认为当前目录的 `cover.png`
+- `--cache-dir <string>`: 自定义依赖缓存目录 (优先于环境变量 `GEN_COVER_CACHE_DIR`)
 
 ### 配色方案参考
 

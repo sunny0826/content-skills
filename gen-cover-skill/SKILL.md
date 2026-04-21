@@ -33,30 +33,24 @@ description: |
 
 当用户触发此 Skill 时，请按照以下步骤执行：
 
-1. **准备脚本与模板**：
-   从本 Skill 的 `assets` 目录中，将 `index.js`、`template.html` 和 `package.json` 复制到用户指定的工作目录（如果未指定，则在当前目录创建一个 `cover-generator` 文件夹）。
+1. **定位入口**：
+   本 Skill 的可执行入口在 `gen-cover-skill/scripts/index.js`，模板资源存放在 `assets/` 目录下。脚本会自动读取模板文件，因此不需要把源码复制到用户工作区。
 
-2. **依赖检查**：
-   由于生成封面依赖 `puppeteer` 和 `commander`，为了提高执行速度和稳定性，推荐**优先使用系统全局安装的依赖**。在 Node.js 中，如果包已全局安装，你可以在命令前设置环境变量 `NODE_PATH` 使其能够解析全局模块。
-   
-   例如，如果你使用 `npm` 或 `pnpm` 全局安装过依赖，可以直接在执行前动态获取全局路径：
-   ```bash
-   export NODE_PATH=$(npm root -g) || export NODE_PATH=$(pnpm root -g)
-   ```
-   *注意：如果你使用 `pnpm link`，必须提供具体的包名（例如 `pnpm link -g puppeteer commander`），不要直接使用不带参数的 `pnpm link`。*
-   如果环境变量配置后仍提示找不到模块，再降级使用本地安装（`npm i puppeteer commander --no-save`）。
-   
-   *注意：如果在 Mac 环境下遇到 Puppeteer 启动失败的问题，脚本已经内置了调用本地 Chrome 的兼容逻辑。*
+2. **检查与初始化依赖**：
+   封面生成依赖 `puppeteer` 和 `commander`。执行脚本时，会优先检查当前环境是否已有依赖；若无，脚本会**自动静默安装**到依赖缓存目录中。
+   - 默认缓存目录：`~/.cache/gen-cover-skill`
+   - 自定义缓存目录：支持通过环境变量 `GEN_COVER_CACHE_DIR` 或 CLI 参数 `--cache-dir` 覆盖。
+   - *注意：在 macOS 下，推荐设置环境变量 `PUPPETEER_SKIP_DOWNLOAD=1`，跳过 Puppeteer 庞大的内置 Chromium 下载，脚本将自动探测并使用系统自带的 Chrome。*
 
 3. **执行生成命令**：
-   使用 Node.js 运行 `index.js` 并传入相应的参数。
+   在用户期望输出图片的目录下运行命令，并将 `-o/--output` 指向最终输出路径。
    示例命令：
    ```bash
-   node index.js -t "用户标题" -s "副标题" -l "标签" -a "作者" -c 6 -d cyberpunk -o cover.png
+   node "<本 Skill 安装路径>/scripts/index.js" -t "用户标题" -s "副标题" -l "标签" -a "作者" -c 6 -d cyberpunk -o cover.png --cache-dir ./.cover-deps
    ```
 
-4. **清理环境**（可选但推荐）：
-   如果是作为管道节点被其他 Skill（如 `content-creator`）调用，你应该在生成成功并交接文件路径后，删除运行所产生的临时代码文件（`index.js`, `template.html`, `package.json`, `node_modules` 等），避免污染用户的工作区。
+4. **缓存清理**（可选）：
+   如需清理依赖缓存，可手动删除 `~/.cache/gen-cover-skill/`（或你设置的 `GEN_COVER_CACHE_DIR`）。
 
 5. **完成与展示**：
    生成完成后，告知用户图片已成功保存，并提供图片的文件路径供用户预览。

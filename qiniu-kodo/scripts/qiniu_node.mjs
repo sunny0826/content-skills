@@ -6,8 +6,57 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import qiniu from 'qiniu';
 import os from 'os';
+import { execSync } from 'child_process';
+import { createRequire } from 'module';
+
+let qiniu;
+
+function getCacheDir() {
+  const args = process.argv.slice(2);
+  const cacheDirIndex = args.indexOf('--cache-dir');
+  if (cacheDirIndex !== -1 && args[cacheDirIndex + 1]) {
+    return path.resolve(process.cwd(), args[cacheDirIndex + 1]);
+  }
+  const custom = process.env.QINIU_KODO_CACHE_DIR;
+  if (custom && custom.trim()) return custom.trim();
+  return path.join(os.homedir(), '.cache', 'qiniu-kodo-skill');
+}
+
+async function ensureDeps() {
+  try {
+    const localRequire = createRequire(import.meta.url);
+    qiniu = localRequire('qiniu');
+    return;
+  } catch (err) {
+    // 忽略本地找不到模块的错误，继续走缓存逻辑
+  }
+
+  const cacheDir = getCacheDir();
+  const nmDir = path.join(cacheDir, 'node_modules');
+  const qiniuPkg = path.join(nmDir, 'qiniu', 'package.json');
+  
+  if (!fs.existsSync(qiniuPkg)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const pkgPath = path.join(cacheDir, 'package.json');
+    if (!fs.existsSync(pkgPath)) {
+      fs.writeFileSync(
+        pkgPath,
+        JSON.stringify({ name: 'qiniu-kodo-skill-cache', private: true }, null, 2),
+        'utf-8'
+      );
+    }
+    console.error(`[qiniu-kodo-skill] 正在初始化依赖到缓存目录: ${cacheDir}`);
+    execSync('npm i qiniu@^7.14.0 --no-save --silent --no-fund --no-audit', {
+      cwd: cacheDir,
+      stdio: 'ignore',
+      env: { ...process.env, NPM_CONFIG_LOGLEVEL: 'error' }
+    });
+  }
+  
+  const cacheRequire = createRequire(path.join(cacheDir, 'package.json'));
+  qiniu = cacheRequire('qiniu');
+}
 
 // 配置文件路径
 const SKILL_DIR = path.dirname(__dirname);
@@ -167,8 +216,8 @@ function buildDefaultKey(localPath, prefix = 'image/') {
 function printUsage() {
   const lines = [
     '用法:',
-    '  node scripts/qiniu_node.mjs upload --local <LocalPath> [--key <Key>] [--prefix <Prefix>] [--format json|text]',
-    '  node scripts/qiniu_node.mjs test-connection',
+    '  node scripts/qiniu_node.mjs upload --local <LocalPath> [--key <Key>] [--prefix <Prefix>] [--format json|text] [--cache-dir <dir>]',
+    '  node scripts/qiniu_node.mjs test-connection [--cache-dir <dir>]',
     '',
     '示例:',
     '  node scripts/qiniu_node.mjs upload --local ./cover.png --key image/post-cover.png',
@@ -176,6 +225,7 @@ function printUsage() {
     '',
     '说明:',
     '  - 默认输出 json，便于其它 Skill/Agent 解析（包含 url/key/hash/size/bucket）',
+    '  - 首次运行会自动在 ~/.cache/qiniu-kodo-skill/ 安装依赖，可通过 --cache-dir 或 QINIU_KODO_CACHE_DIR 自定义',
     '  - 若要返回公开 URL，请在 config/qiniu-config.json、~/.kodo-config/qiniu-config.json 或环境变量中配置 QINIU_DOMAIN'
   ];
   console.log(lines.join('\n'));
@@ -190,6 +240,8 @@ async function main() {
       printUsage();
       return;
     }
+
+    await ensureDeps();
 
     if (command === 'upload') {
       const localPath = readFlag(args, '--local');

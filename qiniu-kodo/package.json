@@ -11,7 +11,7 @@
   "dependencies": {
     "qiniu": "^7.14.0"
   },
-  "keywords": ["qiniu", "kodo", "oss", "openclaw", "skill"],
+  "keywords": ["qiniu", "kodo", "oss", "skill"],
   "author": "33",
   "license": "MIT"
 }

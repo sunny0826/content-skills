@@ -52,3 +52,6 @@ gen-cover/test_cyberpunk.png
 gen-cover/test_sphere.png
 qiniu-kodo/config/qiniu-config.json
 qiniu-kodo/node_modules
+qiniu-kodo/.pnpm
+gen-cover-skill/scripts/node_modules
+gen-cover-skill/scripts/.pnpm

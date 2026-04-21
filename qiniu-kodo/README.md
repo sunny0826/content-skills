@@ -9,14 +9,12 @@
 ## 🚀 快速开始
 
 ```bash
-# 安装依赖
-npm install
-
-# 配置凭证 (会优先在 ~/.kodo-config/qiniu-config.json 生成配置)
-# 或者你也可以直接配置环境变量 QINIU_ACCESS_KEY, QINIU_SECRET_KEY, QINIU_REGION, QINIU_BUCKET, QINIU_DOMAIN
+# 配置凭证 (优先在 ~/.kodo-config/qiniu-config.json 生成配置)
+# 或者直接配置环境变量 QINIU_ACCESS_KEY, QINIU_SECRET_KEY, QINIU_REGION, QINIU_BUCKET, QINIU_DOMAIN
 bash scripts/setup.sh --access-key "xxx" --secret-key "xxx" --region "z0" --bucket "mybucket"
 
 # 测试连接
+# (首次运行时会自动静默安装 qiniu 依赖到 ~/.cache/qiniu-kodo-skill)
 node scripts/qiniu_node.mjs test-connection
 ```
 
