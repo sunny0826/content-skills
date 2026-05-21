@@ -12,8 +12,9 @@
 
 **核心能力：**
 - **深度分析**：支持从 URL、文本片段、PDF 或文档中提取核心观点和数据。
+- **低 Token 抽取**：内置 `scripts/extract_web.mjs`，会把网页正文、标题、链接和图片候选保存到临时文件，只在终端输出摘要，避免把整页 HTML 打进日志。
 - **结构化创作**：严格遵循专业性、准确性、可读性等内容要求，自动排版并支持生成 Mermaid 可视化图表。
-- **Hugo 兼容**：自动填充标准的 Hugo front matter（`title`、`date`、`draft`、`tags`、`categories`、`slug` 等）。
+- **Hugo 兼容**：自动填充 Hugo front matter，并通过有界采样兼容目标项目已有字段（如 `summary`、`authors`、`lastmod`、`type` 等）。
 - **一键输出**：自动保存至 `content/post/<slug>/index.md` 或指定路径（支持为每篇文章创建独立的目录）。
 
 **使用示例：**
@@ -34,8 +35,9 @@
 
 **核心能力：**
 - **事实对比**：深度比对原文与生成文章，捕捉数据、时间、逻辑等事实偏差。
-- **只读审核**：绝不直接修改用户文件，而是出具结构化的核查报告。
+- **授权模式**：默认只读出具结构化核查报告；当用户明确要求“无需确认直接改”时，可直接应用最小必要修改并列出修改清单。
 - **建设性建议**：针对翻译生硬、表达不当等问题，给出具体的重写参考与改进建议。
+- **发布检查**：额外检查 front matter、future date、图片路径、参考资料覆盖和 Hugo 构建可见性。
 
 **使用示例：**
 
@@ -51,10 +53,36 @@
 
 ```text
 先使用 content-creator 生成文章；生成完成后，使用 content-checker 对刚生成的 index.md 做事实核查与质量建议输出；
-注意：content-checker 只能给建议，不要直接修改文章，等我确认后再改。
+注意：如果需要直接修改，请在 prompt 中明确写“无需确认直接改”；否则 content-checker 只输出建议。
 ```
 
+## 低噪声网页抽取
+
+当参考资料是 URL 时，可以先用抽取脚本生成正文和图片候选：
+
+```bash
+node content-creator/scripts/extract_web.mjs \
+  "https://example.com/source" \
+  --out-dir /tmp/content-creator-sources/example
+```
+
+脚本会写入 `source-01.txt` 和 `source-01.json`，终端只输出包含标题、路径、图片数量等信息的摘要，方便 Agent 后续读取文件而不是打印完整 HTML。
+
 ## 📦 安装与配置
+
+### 同步本地安装副本
+
+仓库中根目录是源码版 skill，`.agents/skills`、`.claude/skills`、`.trae/skills` 是本地宿主的安装副本。修改源码版后，可以运行：
+
+```bash
+scripts/sync-local-skills.sh
+```
+
+也可以指定其它项目的 skill 根目录：
+
+```bash
+scripts/sync-local-skills.sh /path/to/project/.agents/skills
+```
 
 ### 使用 `npx skills add` 安装
 

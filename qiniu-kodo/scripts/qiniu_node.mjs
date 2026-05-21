@@ -64,25 +64,21 @@ const CONFIG_DIR = path.join(SKILL_DIR, 'config');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'qiniu-config.json');
 
 function loadConfig() {
-  let configPath = CONFIG_FILE;
-  
-  // 检查 qiniu-kodo/config/qiniu-config.json
-  if (fs.existsSync(configPath)) {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    if (isValidConfig(config)) return normalizeConfig(config);
-  }
-  
-  // 备用检查路径：尝试找 ~/.kodo-config/qiniu-config.json
   const altConfigPath = path.join(os.homedir(), '.kodo-config', 'qiniu-config.json');
   if (fs.existsSync(altConfigPath)) {
     const config = JSON.parse(fs.readFileSync(altConfigPath, 'utf-8'));
     if (isValidConfig(config)) return normalizeConfig(config);
   }
 
+  if (fs.existsSync(CONFIG_FILE)) {
+    const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+    if (isValidConfig(config)) return normalizeConfig(config);
+  }
+
   const envConfig = normalizeConfig({
     accessKey: process.env.QINIU_ACCESS_KEY,
     secretKey: process.env.QINIU_SECRET_KEY,
-    bucket: process.env.QINIU_BUCKET || 'guoxudong-io',
+    bucket: process.env.QINIU_BUCKET,
     region: process.env.QINIU_REGION || 'z0',
     domain: process.env.QINIU_DOMAIN || ''
   });

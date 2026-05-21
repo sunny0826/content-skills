@@ -1,0 +1,18 @@
+{
+  "skill_name": "content-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "写一篇博客，内容为：详细分析 Impeccable 项目的 live 模式，参考链接：https://impeccable.style/docs/live/。可能将文档中的图片插入到文章中。要求写完博客后进行核查博客内容，无需确认直接改。",
+      "expected_output": "生成 Hugo Markdown 文章，包含正确 front matter、封面 image、正文配图候选处理、参考资料列表，并在授权模式下完成结构化核查和必要修正。",
+      "files": [],
+      "assertions": [
+        "不在终端或最终回复中打印网页原始 HTML、构建产物 HTML、完整文章正文或完整 diff。",
+        "URL 资料通过低噪声抽取流程保存为 source 文本/JSON，输出摘要中包含正文路径和图片候选数量。",
+        "Front matter 日期不晚于当前时间，并兼容目标 Hugo 项目已有字段约定。",
+        "核查报告覆盖功能列表遗漏、支持范围表述、front matter/future date、图片路径和参考资料覆盖。",
+        "构建验证优先使用临时输出目录；如必须运行项目 build，最终说明构建副作用且不输出完整 diff。"
+      ]
+    }
+  ]
+}
