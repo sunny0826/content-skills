@@ -3,7 +3,7 @@ name: generate-cover
 description: |
   当用户需要为文章、博客或任何内容生成具有现代设计感的精美封面图时，请务必使用此 Skill。
   该 Skill 会基于 `puppeteer` 和预设的现代风 HTML 模板，生成带有毛玻璃、极光弥散渐变和高质感排版的封面图片。
-  使用时，必须收集文章的标题（title）、副标题（subtitle）、标签（label）、作者（author）、配色方案（scheme 0-12）和装饰风格（deco: classic/cyberpunk/sphere/minimal），并将它们作为参数传递给生成脚本。
+  使用时，必须收集文章的标题（title）、副标题（subtitle）、标签（label）、作者（author）、配色方案（scheme 0-12）和装饰风格（deco: classic/cyberpunk/sphere/minimal），并将它们作为参数传递给生成脚本。注意：本 Skill 触发后指令会自动生效，绝不要使用 cat/sed 等命令手动读取 SKILL.md 文件。
 ---
 
 # generate-cover

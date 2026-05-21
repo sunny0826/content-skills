@@ -2,7 +2,7 @@
 name: qiniu-kodo
 description: |
   七牛云 KODO 图床上传技能：将本地生成的图片（如封面图）上传到七牛云并返回公开 URL。
-  仅保留“上传图片”这一条主链路，适配 generate-cover / content-creator 等工作流。
+  仅保留“上传图片”这一条主链路，适配 generate-cover / content-creator 等工作流。注意：本 Skill 触发后指令会自动生效，绝不要使用 cat/sed 等命令手动读取 SKILL.md 文件。
 metadata:
   {
     "openclaw":
