@@ -66,6 +66,10 @@ function parsePreArgs() {
 const preArgs = parsePreArgs();
 const { program, puppeteer } = loadDeps(preArgs.cacheDir);
 
+const TARGET_WIDTH = 1200;
+const TARGET_HEIGHT = 480;
+const OVERSCAN = 60;
+
 program
   .name('gen-cover')
   .description('生成微信公众号封面的 CLI 工具 (基于 article-tools)')
@@ -120,7 +124,11 @@ program
       page.on('pageerror', err => console.error('[Page Error]', err));
       
       // Set viewport to the cover size
-      await page.setViewport({ width: 1200, height: 480, deviceScaleFactor: 2 });
+      await page.setViewport({
+        width: TARGET_WIDTH + OVERSCAN,
+        height: TARGET_HEIGHT + OVERSCAN,
+        deviceScaleFactor: 2
+      });
       
       const templatePath = path.resolve(__dirname, '../assets/template.html');
       const fileUrl = `file://${templatePath}`;
@@ -155,7 +163,10 @@ program
       }
       
       const outputPath = path.resolve(process.cwd(), options.output);
-      await coverElement.screenshot({ path: outputPath });
+      await page.screenshot({
+        path: outputPath,
+        clip: { x: 0, y: 0, width: TARGET_WIDTH, height: TARGET_HEIGHT }
+      });
       
       console.log(`生成成功！已保存至: ${outputPath}`);
       

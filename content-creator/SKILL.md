@@ -149,6 +149,21 @@ PUPPETEER_SKIP_DOWNLOAD=1 node "<generate-cover 路径>/scripts/index.js" \
 
 2. **调用 `qiniu-kodo` Skill**：直接调用，**禁止**读取其 SKILL.md。将 `cover.png` 上传到七牛云，`key` 统一使用 `image/<slug>-cover.png` 前缀，获取公开 URL。
 
+   - **禁止探测或读取 `.env` / `.env.*`**：不得通过 `find . -name '.env*'`、`cat .env` 等方式“猜测配置是否存在”。配置可用性只允许通过 `qiniu_node.mjs test-connection` 判断。
+   - **不要为了确认用法重复跑 `--help`**：除非命令报错且明确提示参数问题，否则不要先执行 `qiniu_node.mjs --help`。
+   - **推荐流程**：先测试连通性，再上传，并尽量用 `--format text` 只返回 URL，降低日志噪声：
+
+```bash
+node "<qiniu-kodo 路径>/scripts/qiniu_node.mjs" test-connection --cache-dir ./.qiniu-deps
+node "<qiniu-kodo 路径>/scripts/qiniu_node.mjs" upload \
+  --local ./.cover-generator-<slug>/cover.png \
+  --key "image/<slug>-cover.png" \
+  --format text \
+  --cache-dir ./.qiniu-deps
+```
+
+   - 若 `test-connection` 失败或 `upload` 返回空 URL（通常是未配置 `QINIU_DOMAIN`），则保留 `image: ""` 并在交付说明里提示用户补齐域名配置后再回填。
+
 3. **清理**：上传完毕后删除 `.cover-generator-<slug>` 目录。
 
 ### 5. 保存与输出

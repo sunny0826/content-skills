@@ -50,6 +50,15 @@ metadata:
 
 ## 运行方式（唯一主流程：上传图片）
 
+### 推荐工作流（先测再传）
+
+- **禁止探测或读取 `.env` / `.env.*`**：不得通过 `find . -name '.env*'`、`cat .env` 等方式确认配置；这会引入误读密钥文件的风险。配置可用性只允许通过 `test-connection` 判断。
+- 推荐在上传前先执行一次连通性测试：失败则直接跳过上传，让上游流程保留空 `image` 并提示用户修复配置。
+
+```bash
+node scripts/qiniu_node.mjs test-connection --cache-dir ./.qiniu-deps
+```
+
 ```bash
 node scripts/qiniu_node.mjs upload \
   --local "/abs/path/to/cover.png" \
@@ -75,7 +84,7 @@ node scripts/qiniu_node.mjs upload \
 {"success":true,"key":"image/my-post-cover.png","hash":"...","url":"https://cdn.example.com/image/my-post-cover.png","size":12345,"bucket":"mybucket"}
 ```
 
-如需仅输出 URL，可加 `--format text`（若未配置 domain，则输出为空行）：
+推荐默认使用 `--format text` 仅输出 URL，降低日志噪声（若未配置 domain，则输出为空行，表示无法回填 `image` 字段）：
 
 ```bash
 node scripts/qiniu_node.mjs upload --local "/abs/path/to/cover.png" --key "image/x.png" --format text
