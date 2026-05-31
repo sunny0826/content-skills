@@ -45,6 +45,12 @@
 使用 content-checker，核查 content/post/my-article/index.md，参考资料是：https://example.com/source
 ```
 
+### xiaohongshu-content-creator
+
+**路径**：`xiaohongshu-content-creator/SKILL.md`
+
+用于创作“小红书风格”的技术文章/技术笔记，输出纯 Markdown（无 Hugo front matter），版式对齐 `content/xiaohongshu/*/index.md`；禁用封面与图床上传；生成后强制调用 `content-checker` 做发布前核查。
+
 ---
 
 ## ✅ 推荐工作流：生成 + 核查
