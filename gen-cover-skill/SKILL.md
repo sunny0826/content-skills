@@ -1,9 +1,9 @@
 ---
 name: generate-cover
 description: |
-  当用户需要为文章、博客或任何内容生成具有现代设计感的精美封面图时，请务必使用此 Skill。
-  该 Skill 会基于 `puppeteer` 和预设的现代风 HTML 模板，生成带有毛玻璃、极光弥散渐变和高质感排版的封面图片。
-  使用时，必须收集文章的标题（title）、副标题（subtitle）、标签（label）、作者（author）、配色方案（scheme 0-12）和装饰风格（deco: classic/cyberpunk/sphere/minimal），并将它们作为参数传递给生成脚本。注意：本 Skill 触发后指令会自动生效，绝不要使用 cat/sed 等命令手动读取 SKILL.md 文件。
+  当用户需要为文章、博客、技术内容或 content-creator 工作流生成本地 PNG 封面图时使用。
+  基于 Puppeteer 和内置 HTML 模板生成现代感封面；需要 title，通常也带 subtitle、label、author、scheme(0-12)、deco(classic/cyberpunk/sphere/minimal)、output。
+  只负责生成本地图片；上传公开 URL 交给 qiniu-kodo。
 ---
 
 # generate-cover
@@ -12,6 +12,18 @@ description: |
 
 ## 核心能力
 它内置了一个强大的 HTML 渲染引擎模板（支持极光背景、毛玻璃组件、噪点纹理等高级视觉效果），通过 Puppeteer 无头浏览器将这些网页元素完美捕捉并输出为高质量的 PNG 图片。
+
+## 可用资源
+
+- `scripts/index.js`：封面生成入口。
+- `assets/cover.html` / `assets/template.html`：内置模板资源，脚本会读取，不需要复制到用户项目。
+
+## Gotchas
+
+- **本技能只生成本地 PNG**：不要上传图片或回填文章 `image` 字段；需要公开 URL 时交给 `qiniu-kodo`。
+- **不要固定赛博朋克**：`scheme` 和 `deco` 应按文章主题选择；技术深度文章常用克制、清晰的风格。
+- **Puppeteer 下载很重**：macOS 下优先设置 `PUPPETEER_SKIP_DOWNLOAD=1`，让脚本探测系统 Chrome。
+- **参数比追问更重要**：缺少可选参数时可用合理默认值；只有缺少标题或用户明确要求定制视觉时再追问。
 
 ## 交互与参数要求
 

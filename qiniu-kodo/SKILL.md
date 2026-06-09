@@ -1,8 +1,8 @@
 ---
 name: qiniu-kodo
 description: |
-  七牛云 KODO 图床上传技能：将本地生成的图片（如封面图）上传到七牛云并返回公开 URL。
-  仅保留“上传图片”这一条主链路，适配 generate-cover / content-creator 等工作流。注意：本 Skill 触发后指令会自动生效，绝不要使用 cat/sed 等命令手动读取 SKILL.md 文件。
+  当用户要把本地图片上传到七牛云 KODO、为 Hugo/Markdown 封面获取公开 URL、或 content-creator/generate-cover 需要上传 cover.png 并回填 image 字段时使用。
+  主流程只有 test-connection 和 upload；不要读取 .env/.env.* 猜配置，配置可用性通过脚本判断。
 metadata:
   {
     "openclaw":
@@ -26,6 +26,18 @@ metadata:
 - `local`：要上传的本地图片绝对路径（通常来自 generate-cover 的输出）
 - `key`：上传到 KODO 的对象 Key（推荐统一使用 `image/` 前缀，例如 `image/<slug>-cover.png`）
 - `domain`：用于拼接公开访问 URL 的 CDN 域名（强烈建议配置）
+
+## 可用资源
+
+- `scripts/qiniu_node.mjs`：唯一推荐入口，支持 `test-connection` 和 `upload`。
+- `config/qiniu-config.example.json`：配置格式参考；不要读取真实配置文件内容并展示给用户。
+
+## Gotchas
+
+- **不要探测 `.env`**：不得用 `find`、`cat`、`rg` 等方式寻找或打印密钥配置。
+- **先测再传**：上游工作流里先跑 `test-connection`；失败就让上游保留空 `image` 并说明配置问题。
+- **没有 domain 就没有可回填 URL**：上传可能成功但 `--format text` 为空，表示缺少 `QINIU_DOMAIN` 或配置域名。
+- **日志保持短**：能用 `--format text` 时只返回 URL；需要调试时再看 JSON。
 
 ## 配置方式
 

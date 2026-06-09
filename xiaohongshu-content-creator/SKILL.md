@@ -1,9 +1,9 @@
 ---
 name: xiaohongshu-content-creator
 description: >-
-  当用户要求写“小红书/Xiaohongshu”风格的技术文章、笔记、种草式技术分享、面向小红书发布的 Markdown 内容时，请务必使用此 Skill。
-  本 Skill 产出适合小红书平台阅读习惯的技术文章：短段落、强结论、结构清晰、可收藏复用；输出为纯 Markdown，格式与 /Users/guoxudong/guoxudong.io/content/xiaohongshu/*/index.md 一致；
-  禁止调用 generate-cover / qiniu-kodo 等封面与图床上传流程；生成后必须使用 content-checker 做发布前核查（默认只读建议，除非用户明确授权可直接修改）。
+  当用户要求写小红书/Xiaohongshu 技术笔记、技术种草、短图文文案、可收藏的教程/避坑/观点解读，或保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/index.md 时使用。
+  输出纯 Markdown：短段落、强结论、结构清晰、末尾包含 Mate（发布信息）。
+  禁止生成封面、上传图床或回填 Hugo image；写完后触发 content-checker 做发布前核查。
 user-invocable: true
 ---
  
@@ -28,7 +28,7 @@ user-invocable: true
 - 当资料冲突或可信度不足时，用更保守的表述并标注不确定性。
  
 ## 需要从用户获取的信息
- 
+
 若用户未提供，请主动补齐关键信息（优先一次性问清楚）：
  
 1. 主题与目标读者：面向谁、解决什么痛点。
@@ -36,7 +36,20 @@ user-invocable: true
 3. 发布意图：是“经验复盘/教程/避坑/对比测评/观点解读/工具推荐/原理科普”哪一类。
 4. 输出路径：若用户未指定，默认写入 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/index.md`。
 5. 是否允许核查后直接修改：默认不允许。
- 
+
+## 可用资源
+
+- `content-checker` Skill：写完后的强制发布前核查，默认只读建议。
+- 目标目录 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/`：仅在需要对齐既有格式且用户允许时少量查看同类文章结构；不要批量读取正文。
+
+## Gotchas
+
+- **这是小红书，不是 Hugo 博客**：不要生成 front matter、封面、`image` 字段或七牛上传流程。
+- **别把模板写死**：保留“标题、首屏结论、至少两个小节、Mate”的骨架，但小节标题和叙事顺序要随主题变化。
+- **首屏要有结论**：开头 3-6 行必须让读者知道收益、边界或反差，避免“本文将介绍”。
+- **Mate 是发布素材，不是附录**：建议标题、正文描述、参考资料、话题标签四块必须齐全。
+- **核查仍然默认只读**：除非用户明确授权，`content-checker` 不直接改文。
+
 ## 工作流程
  
 ### 1) 抽取与理解素材
