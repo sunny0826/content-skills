@@ -70,6 +70,20 @@
         "配置失败或缺少 domain 时报告原因，不伪造 URL。",
         "不调用 generate-cover，不修改 Hugo/Markdown 文章。"
       ]
+    },
+    {
+      "id": 6,
+      "target_skill": "blog-orchestrator",
+      "prompt": "使用 blog-orchestrator 基于 https://example.com/source 写一篇 Hugo 博客，标题为《AI Agent 博客发布流水线实践》。生成内容后直接核查并应用修改；封面优先判断 baoyu-cover-image 是否可用，不可用就用 generate-cover；封面给我 review，满意后上传七牛并回填 image。",
+      "expected_output": "按固定顺序编排 content-creator、content-checker、baoyu-cover-image/generate-cover、用户封面 review、qiniu-kodo 上传和 image 回填；在用户确认封面前不上传图床，不修改 image 字段。",
+      "files": [],
+      "assertions": [
+        "先调用 content-creator 生成 Hugo Markdown，并记录文章路径和编排交接信息。",
+        "随后调用 content-checker，并明确授权“无需确认直接改，仅限修改刚生成的文章文件”。",
+        "封面阶段先判断 baoyu-cover-image 是否可用；可用时默认使用 2.35:1 并询问 type、palette、rendering、text、mood、font 等选择；不可用时说明原因并降级 generate-cover。",
+        "封面图生成后必须展示或提供本地路径给用户 review；用户未确认满意前不调用 qiniu-kodo。",
+        "用户确认满意后才上传七牛，并将返回 URL 回填到同一篇文章 front matter 的 image 字段。"
+      ]
     }
   ]
 }

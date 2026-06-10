@@ -36,6 +36,7 @@ sync_skill() {
 
 for target_root in "${TARGET_ROOTS[@]}"; do
   mkdir -p "$target_root"
+  sync_skill "blog-orchestrator" "blog-orchestrator" "$target_root"
   sync_skill "content-creator" "content-creator" "$target_root"
   sync_skill "content-checker" "content-checker" "$target_root"
   sync_skill "xiaohongshu-content-creator" "xiaohongshu-content-creator" "$target_root"

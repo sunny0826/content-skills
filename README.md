@@ -4,6 +4,17 @@
 
 ## Skills 列表
 
+### blog-orchestrator
+
+**路径**：`blog-orchestrator/SKILL.md`
+
+用于端到端编排 Hugo 博客发布流程：生成文章、授权核查并直接修正、生成封面并让用户 review、上传七牛图床、回填 `image` 字段。
+
+**核心能力：**
+- **发布流水线编排**：串联 `content-creator`、`content-checker`、封面生成 Skill 和 `qiniu-kodo`。
+- **封面生成选择**：优先使用 `baoyu-cover-image`；不可用时降级使用 `generate-cover`。
+- **用户 review 门槛**：封面图必须经用户确认满意后才上传图床和回填文章字段。
+
 ### content-creator
 
 **路径**：`content-creator/SKILL.md`
@@ -79,13 +90,14 @@
 
 当前各 Skill 保持单一职责，不再互相直接触发：
 
+- `blog-orchestrator`：负责编排完整 Hugo 博客发布流水线。
 - `content-creator`：生成并保存 Hugo Markdown，输出编排交接信息。
 - `xiaohongshu-content-creator`：生成并保存小红书 Markdown，输出编排交接信息。
 - `content-checker`：只在用户或外部编排层明确发起核查任务时运行。
 - `generate-cover`：只生成本地 PNG 封面。
 - `qiniu-kodo`：只上传本地图片并返回公开 URL。
 
-后续如果需要“生成文章 -> 生成封面 -> 上传图床 -> 回填 image -> 内容核查”的完整流水线，应由单独的编排 Skill 负责串联这些步骤。
+如果需要“生成文章 -> 内容核查 -> 生成封面 -> 用户 review -> 上传图床 -> 回填 image”的完整流水线，使用 `blog-orchestrator`。
 
 ## 低噪声网页抽取
 
