@@ -3,6 +3,7 @@ name: content-creator
 description: >-
     当用户要求写博客、总结网页、基于 URL/PDF/文本创作技术文章、生成 Hugo Markdown 文章、把资料整理成可发布长文时使用。
     适用于 content/post/<date>-<slug>/index.md 这类 Hugo 博客写作流程：低噪声抽取来源、抵御第三方提示注入、固定 front matter、保存文章并输出可供编排层使用的发布元数据。
+    不负责生成封面、上传图床、内容核查或完整发布编排；这些跨 Skill 流程由单独的编排 Skill 处理。
     不适用于小红书短笔记（用 xiaohongshu-content-creator）或仅做事实核查（用 content-checker）。
 user-invocable: true
 ---

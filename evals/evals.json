@@ -1,8 +1,9 @@
 {
-  "skill_name": "content-creator",
+  "skill_name": "content-skills",
   "evals": [
     {
       "id": 1,
+      "target_skill": "content-creator",
       "prompt": "写一篇博客，内容为：详细分析 Impeccable 项目的 live 模式，参考链接：https://impeccable.style/docs/live/。可能将文档中的图片插入到文章中。只使用 content-creator 生成 Hugo Markdown 和编排交接信息，不要直接触发封面、上传或核查流程。",
       "expected_output": "生成 Hugo Markdown 文章，包含正确 front matter、正文配图候选处理、参考资料列表，并输出文章路径、来源抽取结果和建议后续检查项；不直接调用封面生成、图床上传或内容核查。",
       "files": [],
@@ -12,6 +13,62 @@
         "Front matter 日期不晚于当前时间，并兼容目标 Hugo 项目已有字段约定。",
         "最终输出包含可供外部编排层继续处理的文章路径、来源抽取结果和建议后续检查项，但不生成核查报告或应用修正。",
         "构建验证优先使用临时输出目录；如必须运行项目 build，最终说明构建副作用且不输出完整 diff。"
+      ]
+    },
+    {
+      "id": 2,
+      "target_skill": "content-checker",
+      "prompt": "使用 content-checker 核查 content/post/20260610-demo/index.md，参考资料是 https://example.com/source。只读建议，不要直接修改文件，也不要生成新文章、封面或上传图片。",
+      "expected_output": "输出结构化核查报告，按事实性问题、表达与质量建议、核查总结组织；默认不修改文章文件，不生成新文章，不触发封面生成或图床上传。",
+      "files": [],
+      "assertions": [
+        "报告包含核查对象、参考资料和核查模式。",
+        "默认模式下不写回文章文件，不输出已应用修改清单作为实际结果。",
+        "事实问题必须引用文章当前表述和参考资料事实；证据不足时标注不确定或降级为表达建议。",
+        "不创建 Hugo 文章、不生成封面、不调用七牛上传。",
+        "不在终端或最终回复中打印整篇文章、整页 HTML 或完整 diff。"
+      ]
+    },
+    {
+      "id": 3,
+      "target_skill": "xiaohongshu-content-creator",
+      "prompt": "写一篇小红书技术笔记，主题是“用 uv 管理 Python 项目为什么比 pip+venv 更顺手”，参考要点包括：安装快、锁文件、工具运行、适合个人项目。只使用 xiaohongshu-content-creator，保存为 index.md，不要生成封面、上传图床或触发核查。",
+      "expected_output": "生成纯 Markdown 小红书笔记，包含标题、首屏结论、至少两个信息增量小节和 Mate 发布信息；输出文件路径和编排交接信息，不生成 front matter、封面、图床上传或核查报告。",
+      "files": [],
+      "assertions": [
+        "输出为纯 Markdown，并保存为 index.md 或用户指定的 .md 文件。",
+        "正文包含首屏结论、至少两个信息增量小节和末尾 Mate 发布信息。",
+        "不包含 Hugo front matter、image 字段或封面占位图。",
+        "最终输出包含文件路径、素材来源摘要和建议检查项。",
+        "不触发 content-checker、generate-cover 或 qiniu-kodo。"
+      ]
+    },
+    {
+      "id": 4,
+      "target_skill": "generate-cover",
+      "prompt": "使用 generate-cover 为文章《AI Agent 工作流编排实践》生成本地 PNG 封面，subtitle 为“从单一 Skill 到可组合流水线”，label 为“AI Engineering”，author 为“guoxudong”，输出到 /tmp/agent-workflow-cover.png。不要上传图床或回填文章 image。",
+      "expected_output": "生成指定路径的本地 PNG 封面，并汇报文件路径；不上传图片，不返回图床 URL，不修改任何 Markdown 文章字段。",
+      "files": [],
+      "assertions": [
+        "调用封面生成脚本时传入 title、subtitle、label、author 和 output。",
+        "生成结果是本地 PNG 文件路径。",
+        "缺少可选视觉参数时使用合理默认值，不追问非必要信息。",
+        "不调用 qiniu-kodo，不上传图床，不回填 image 字段。",
+        "失败时报告依赖、Chrome 或输出路径相关错误，而不是改走其它 Skill。"
+      ]
+    },
+    {
+      "id": 5,
+      "target_skill": "qiniu-kodo",
+      "prompt": "使用 qiniu-kodo 上传 /tmp/agent-workflow-cover.png，key 为 image/agent-workflow-cover.png，输出 text 格式 URL。不要读取 .env，不要修改 Markdown，也不要重新生成封面。",
+      "expected_output": "先通过 test-connection 判断配置可用性，再上传指定本地图片并返回公开 URL；如果配置不可用，报告原因并停止，不读取 .env，不生成封面，不修改文章。",
+      "files": [],
+      "assertions": [
+        "先执行或要求执行 test-connection，再进行 upload。",
+        "上传命令使用用户提供的 local 和 key，并优先使用 --format text。",
+        "不查找、不读取、不打印 .env 或密钥配置文件内容。",
+        "配置失败或缺少 domain 时报告原因，不伪造 URL。",
+        "不调用 generate-cover，不修改 Hugo/Markdown 文章。"
       ]
     }
   ]

@@ -51,6 +51,28 @@
 
 用于创作“小红书风格”的技术文章/技术笔记，输出纯 Markdown（无 Hugo front matter），版式对齐 `content/xiaohongshu/*/index.md`；不负责封面、图床上传或发布前核查。
 
+### generate-cover
+
+**路径**：`gen-cover-skill/SKILL.md`
+
+用于根据标题、副标题、标签、作者、配色和装饰风格生成本地 PNG 封面图。只负责本地图片生成，不上传图床、不回填文章字段。
+
+**核心能力：**
+- **本地封面生成**：基于 Puppeteer 和内置 HTML 模板输出高质量 PNG。
+- **可控视觉参数**：支持 `scheme`、`deco`、`title`、`subtitle`、`label`、`author` 和 `output`。
+- **单职责边界**：公开 URL、上传和文章字段回填由外部编排 Skill 或用户后续指令处理。
+
+### qiniu-kodo
+
+**路径**：`qiniu-kodo/SKILL.md`
+
+用于把本地图片上传到七牛云 KODO，并返回可用于 Hugo/Markdown 的公开 URL。只负责 `test-connection` 和 `upload` 主流程。
+
+**核心能力：**
+- **连接检查**：通过脚本判断七牛配置是否可用，不读取或展示 `.env`。
+- **图片上传**：支持指定 `local`、`key`、`prefix` 和输出格式。
+- **低噪声输出**：推荐使用 `--format text` 只返回 URL，便于外部编排层回填。
+
 ---
 
 ## ✅ 解耦后的职责边界
