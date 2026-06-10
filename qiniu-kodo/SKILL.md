@@ -1,7 +1,7 @@
 ---
 name: qiniu-kodo
 description: |
-  当用户要把本地图片上传到七牛云 KODO、为 Hugo/Markdown 封面获取公开 URL、或 content-creator/generate-cover 需要上传 cover.png 并回填 image 字段时使用。
+  当用户或外部编排层要把本地图片上传到七牛云 KODO、为 Hugo/Markdown 封面获取公开 URL 时使用。
   主流程只有 test-connection 和 upload；不要读取 .env/.env.* 猜配置，配置可用性通过脚本判断。
 metadata:
   {
@@ -23,7 +23,7 @@ metadata:
 
 ## 你需要提供的信息
 
-- `local`：要上传的本地图片绝对路径（通常来自 generate-cover 的输出）
+- `local`：要上传的本地图片绝对路径（通常是调用方已经生成的封面或配图）
 - `key`：上传到 KODO 的对象 Key（推荐统一使用 `image/` 前缀，例如 `image/<slug>-cover.png`）
 - `domain`：用于拼接公开访问 URL 的 CDN 域名（强烈建议配置）
 
@@ -35,7 +35,7 @@ metadata:
 ## Gotchas
 
 - **不要探测 `.env`**：不得用 `find`、`cat`、`rg` 等方式寻找或打印密钥配置。
-- **先测再传**：上游工作流里先跑 `test-connection`；失败就让上游保留空 `image` 并说明配置问题。
+- **先测再传**：调用方或外部编排层应先跑 `test-connection`；失败就保留空 `image` 或跳过后续回填，并说明配置问题。
 - **没有 domain 就没有可回填 URL**：上传可能成功但 `--format text` 为空，表示缺少 `QINIU_DOMAIN` 或配置域名。
 - **日志保持短**：能用 `--format text` 时只返回 URL；需要调试时再看 JSON。
 
@@ -65,7 +65,7 @@ metadata:
 ### 推荐工作流（先测再传）
 
 - **禁止探测或读取 `.env` / `.env.*`**：不得通过 `find . -name '.env*'`、`cat .env` 等方式确认配置；这会引入误读密钥文件的风险。配置可用性只允许通过 `test-connection` 判断。
-- 推荐在上传前先执行一次连通性测试：失败则直接跳过上传，让上游流程保留空 `image` 并提示用户修复配置。
+- 推荐在上传前先执行一次连通性测试：失败则直接跳过上传，让调用方或外部编排层保留空 `image` 并提示用户修复配置。
 
 ```bash
 node scripts/qiniu_node.mjs test-connection --cache-dir ./.qiniu-deps

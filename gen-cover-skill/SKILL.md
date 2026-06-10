@@ -1,9 +1,9 @@
 ---
 name: generate-cover
 description: |
-  当用户需要为文章、博客、技术内容或 content-creator 工作流生成本地 PNG 封面图时使用。
+  当用户需要为文章、博客或技术内容生成本地 PNG 封面图时使用。
   基于 Puppeteer 和内置 HTML 模板生成现代感封面；需要 title，通常也带 subtitle、label、author、scheme(0-12)、deco(classic/cyberpunk/sphere/minimal)、output。
-  只负责生成本地图片；上传公开 URL 交给 qiniu-kodo。
+  只负责生成本地图片；公开 URL、上传和文章字段回填由调用方或外部编排层处理。
 ---
 
 # generate-cover
@@ -20,7 +20,7 @@ description: |
 
 ## Gotchas
 
-- **本技能只生成本地 PNG**：不要上传图片或回填文章 `image` 字段；需要公开 URL 时交给 `qiniu-kodo`。
+- **本技能只生成本地 PNG**：不要上传图片或回填文章 `image` 字段；需要公开 URL 时由调用方或外部编排层单独处理。
 - **不要固定赛博朋克**：`scheme` 和 `deco` 应按文章主题选择；技术深度文章常用克制、清晰的风格。
 - **Puppeteer 下载很重**：macOS 下优先设置 `PUPPETEER_SKIP_DOWNLOAD=1`，让脚本探测系统 Chrome。
 - **参数比追问更重要**：缺少可选参数时可用合理默认值；只有缺少标题或用户明确要求定制视觉时再追问。

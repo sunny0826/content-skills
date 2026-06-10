@@ -15,7 +15,7 @@
 - **低 Token 抽取**：内置 `scripts/extract_web.mjs`，会把网页正文、标题、链接和图片候选保存到临时文件，只在终端输出摘要，避免把整页 HTML 打进日志。
 - **结构化创作**：严格遵循专业性、准确性、可读性等内容要求，自动排版并支持生成 Mermaid 可视化图表。
 - **Hugo 兼容**：自动填充 Hugo front matter，并通过有界采样兼容目标项目已有字段（如 `summary`、`authors`、`lastmod`、`type` 等）。
-- **一键输出**：自动保存至 `content/post/<slug>/index.md` 或指定路径（支持为每篇文章创建独立的目录）。
+- **单职责输出**：自动保存至 `content/post/<slug>/index.md` 或指定路径，并输出文章路径、来源摘要和可供外部编排层继续处理的发布元数据。
 
 **使用示例：**
 
@@ -31,7 +31,7 @@
 
 **路径**：`content-checker/SKILL.md`
 
-专门用于核查由 `content-creator` 生成的内容或任何 Markdown 文章，对比参考资料进行事实与质量核查。
+专门用于核查 Markdown 文章，对比参考资料进行事实与质量核查。
 
 **核心能力：**
 - **事实对比**：深度比对原文与生成文章，捕捉数据、时间、逻辑等事实偏差。
@@ -49,18 +49,21 @@
 
 **路径**：`xiaohongshu-content-creator/SKILL.md`
 
-用于创作“小红书风格”的技术文章/技术笔记，输出纯 Markdown（无 Hugo front matter），版式对齐 `content/xiaohongshu/*/index.md`；禁用封面与图床上传；生成后强制调用 `content-checker` 做发布前核查。
+用于创作“小红书风格”的技术文章/技术笔记，输出纯 Markdown（无 Hugo front matter），版式对齐 `content/xiaohongshu/*/index.md`；不负责封面、图床上传或发布前核查。
 
 ---
 
-## ✅ 推荐工作流：生成 + 核查
+## ✅ 解耦后的职责边界
 
-为了保证事实准确性与表达质量，推荐在生成文章后立即进行内容核查：
+当前各 Skill 保持单一职责，不再互相直接触发：
 
-```text
-先使用 content-creator 生成文章；生成完成后，使用 content-checker 对刚生成的 index.md 做事实核查与质量建议输出；
-注意：如果需要直接修改，请在 prompt 中明确写“无需确认直接改”；否则 content-checker 只输出建议。
-```
+- `content-creator`：生成并保存 Hugo Markdown，输出编排交接信息。
+- `xiaohongshu-content-creator`：生成并保存小红书 Markdown，输出编排交接信息。
+- `content-checker`：只在用户或外部编排层明确发起核查任务时运行。
+- `generate-cover`：只生成本地 PNG 封面。
+- `qiniu-kodo`：只上传本地图片并返回公开 URL。
+
+后续如果需要“生成文章 -> 生成封面 -> 上传图床 -> 回填 image -> 内容核查”的完整流水线，应由单独的编排 Skill 负责串联这些步骤。
 
 ## 低噪声网页抽取
 
