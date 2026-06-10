@@ -8,18 +8,20 @@
 
 **路径**：`blog-orchestrator/SKILL.md`
 
-用于端到端编排 Hugo 博客发布流程：生成文章、授权核查并直接修正、生成封面并让用户 review、上传七牛图床、回填 `image` 字段。
+用于端到端编排 Hugo 博客发布流程：生成文章、授权核查并直接修正、使用 `stop-slop` 去除 AI 味、生成封面并让用户 review、上传七牛图床、回填 `image` 字段。
 
 **核心能力：**
 - **发布流水线编排**：串联 `content-creator`、`content-checker`、封面生成 Skill 和 `qiniu-kodo`。
+- **去 AI 味处理**：核查完成后调用 `stop-slop`，只改表达，不改事实、链接、数字、代码或 front matter。
 - **封面生成选择**：优先使用 `baoyu-cover-image`；不可用时降级使用 `generate-cover`。
 - **用户 review 门槛**：封面图必须经用户确认满意后才上传图床和回填文章字段。
+- **默认博客入口**：普通“写一篇博客，内容为...，相关链接和内容...”请求默认走本 Skill；只有明确要求只生成正文时才使用 `content-creator`。
 
 ### content-creator
 
 **路径**：`content-creator/SKILL.md`
 
-根据提供的参考资料创作高质量内容，并将其保存为适配 [Hugo](https://gohugo.io/) 的 Markdown 文件。
+根据提供的参考资料创作高质量内容，并将其保存为适配 [Hugo](https://gohugo.io/) 的 Markdown 文件。仅用于“只生成正文/Markdown”的单职责场景。
 
 **核心能力：**
 - **深度分析**：支持从 URL、文本片段、PDF 或文档中提取核心观点和数据。
@@ -33,7 +35,7 @@
 在对话中向你的 AI 助手发送以下指令：
 
 ```text
-使用 content-creator，基于以下链接撰写一篇 Kubernetes 资源管理最佳实践的文章：
+使用 content-creator，只生成 Hugo Markdown 正文，不做封面、上传或核查。基于以下链接撰写一篇 Kubernetes 资源管理最佳实践的文章：
 - https://example.com/k8s-resources
 要求标签包含：Kubernetes, 云原生
 ```
@@ -97,7 +99,7 @@
 - `generate-cover`：只生成本地 PNG 封面。
 - `qiniu-kodo`：只上传本地图片并返回公开 URL。
 
-如果需要“生成文章 -> 内容核查 -> 生成封面 -> 用户 review -> 上传图床 -> 回填 image”的完整流水线，使用 `blog-orchestrator`。
+如果需要“生成文章 -> 内容核查 -> 去 AI 味 -> 生成封面 -> 用户 review -> 上传图床 -> 回填 image”的完整流水线，使用 `blog-orchestrator`。
 
 ## 低噪声网页抽取
 

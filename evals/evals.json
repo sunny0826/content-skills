@@ -74,15 +74,17 @@
     {
       "id": 6,
       "target_skill": "blog-orchestrator",
-      "prompt": "使用 blog-orchestrator 基于 https://example.com/source 写一篇 Hugo 博客，标题为《AI Agent 博客发布流水线实践》。生成内容后直接核查并应用修改；封面优先判断 baoyu-cover-image 是否可用，不可用就用 generate-cover；封面给我 review，满意后上传七牛并回填 image。",
-      "expected_output": "按固定顺序编排 content-creator、content-checker、baoyu-cover-image/generate-cover、用户封面 review、qiniu-kodo 上传和 image 回填；在用户确认封面前不上传图床，不修改 image 字段。",
+      "prompt": "写一篇博客，内容为：介绍文章内容，相关链接和内容：1. https://claude.com/blog/how-anthropic-enables-self-service-data-analytics-with-claude",
+      "expected_output": "默认触发 blog-orchestrator，并按固定顺序编排 content-creator、content-checker、stop-slop、baoyu-cover-image/generate-cover、用户封面 review、qiniu-kodo 上传、image 回填和封面临时产物清理；在用户确认封面前不上传图床，不修改 image 字段。",
       "files": [],
       "assertions": [
         "先调用 content-creator 生成 Hugo Markdown，并记录文章路径和编排交接信息。",
         "随后调用 content-checker，并明确授权“无需确认直接改，仅限修改刚生成的文章文件”。",
+        "内容核查并应用修改后调用 stop-slop 去除 AI 味；只改表达，不改 front matter、链接、数字、代码块、引用或参考资料事实。",
         "封面阶段先判断 baoyu-cover-image 是否可用；可用时默认使用 2.35:1 并询问 type、palette、rendering、text、mood、font 等选择；不可用时说明原因并降级 generate-cover。",
         "封面图生成后必须展示或提供本地路径给用户 review；用户未确认满意前不调用 qiniu-kodo。",
-        "用户确认满意后才上传七牛，并将返回 URL 回填到同一篇文章 front matter 的 image 字段。"
+        "用户确认满意后才上传七牛，并将返回 URL 回填到同一篇文章 front matter 的 image 字段。",
+        "上传并回填成功后，清理本流程创建的封面临时目录，例如 cover-image/<slug>/prompts/*.md 和 cover-image/<slug>/cover.png；用户明确要求保留时除外。"
       ]
     }
   ]
