@@ -73,7 +73,7 @@
 
 **路径**：`xiaohongshu-image-creator/SKILL.md`
 
-用于把主题、URL、PDF 或文本资料整理为小红书图片卡片内容，并以 `--yes` 非交互方式委派外部 Agent Skill `baoyu-xhs-images` 生成图片，保存最终 PNG 到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`，最后输出 Mate 发布信息。
+用于把主题、URL、PDF 或文本资料整理为小红书图片卡片内容，并以 `--yes` 非交互方式委派外部 Agent Skill `baoyu-xhs-images` 生成图片，保存最终 PNG 到 `~/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/`，最后输出 Mate 发布信息。
 
 **核心能力：**
 - **小红书卡片内容组织**：参考 `xiaohongshu-content-creator` 的素材提炼逻辑，将内容拆成多页图片卡片。

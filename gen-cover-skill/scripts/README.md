@@ -1,7 +1,7 @@
 # gen-cover
 
 这里的内容是 `gen-cover` 工具源码与模板资源，主要用于本地开发/调试。
-如果你是在调用 `generate-cover` Skill，请以 [gen-cover-skill/SKILL.md](file:///Users/guoxudong/codes/content-skills/gen-cover-skill/SKILL.md) 的执行流程为准。
+如果你是在调用 `generate-cover` Skill，请以 `gen-cover-skill/SKILL.md` 的执行流程为准。
 
 ## 安装
 

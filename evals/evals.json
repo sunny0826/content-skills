@@ -134,7 +134,7 @@
       "id": 10,
       "target_skill": "xiaohongshu-image-creator",
       "prompt": "生成一组小红书图片卡片，主题是“Claude Code 技术团队如何用 Skills 解耦内容生产流程”，参考资料包括现有博客编排 Skill 和小红书正文 Skill。使用 baoyu-xhs-images 生图，保存到小红书内容目录，并输出 Mate 发布信息。",
-      "expected_output": "触发 xiaohongshu-image-creator，先提炼内容并拆成小红书多页卡片，再根据内容自动确定 baoyu-xhs-images 的 preset/style/layout/palette/count 等参数，使用 --yes 非交互方式调用 baoyu-xhs-images 生成图片，只将最终 PNG 保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/，最后输出 Mate 发布信息。",
+      "expected_output": "触发 xiaohongshu-image-creator，先提炼内容并拆成小红书多页卡片，再根据内容自动确定 baoyu-xhs-images 的 preset/style/layout/palette/count 等参数，使用 --yes 非交互方式调用 baoyu-xhs-images 生成图片，只将最终 PNG 保存到 /Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/，最后输出 Mate 发布信息。",
       "files": [],
       "assertions": [
         "默认使用 xiaohongshu-image-creator，而不是 xiaohongshu-content-creator、blog-orchestrator 或 generate-cover。",
@@ -142,7 +142,7 @@
         "调用 baoyu-xhs-images 前根据内容自动设置 preset、style、layout、palette、图片张数和 batch-size，不使用 rendering、font、ratio、size 等未声明参数。",
         "调用 baoyu-xhs-images 时显式使用 --yes 或等价非交互指令，跳过 Smart Confirm，并在生成前简短说明自动采用的策略、风格、布局、配色、张数和后端假设。",
         "baoyu-xhs-images 可用性基于 Skill inventory 或 baoyu-xhs-images/SKILL.md 是否存在，不能只用 which、command -v 或 --help 判断同名 CLI。",
-        "生成图片保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/，并使用 01.png、02.png 这类稳定文件名。",
+        "生成图片保存到 /Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/，并使用 01.png、02.png 这类稳定文件名。",
         "在独立临时 run 目录运行 baoyu-xhs-images，只复制或移动最终 PNG 到小红书内容目录；analysis.md、outline.md、prompts/ 和缓存文件不得留在最终目录。",
         "如果 baoyu-xhs-images 不可用，停止生图并报告缺少依赖，不降级到其它 Skill。",
         "最终输出 Mate 发布信息，包含建议标题、正文描述、参考资料、话题标签和生成图片清单。",
@@ -168,11 +168,11 @@
       "id": 12,
       "target_skill": "xiaohongshu-image-creator",
       "prompt": "宿主请求元数据 mode=blog，但用户文本是：生成小红书图文卡片，内容为介绍 GitHub spec-kit，相关链接：https://github.com/github/spec-kit，内容简洁不拖沓。",
-      "expected_output": "以用户文本中的小红书图文卡片意图为准，触发 xiaohongshu-image-creator，默认输出到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/；不得因为 mode=blog 改写到 content/post/，也不得生成 Hugo front matter、cards.html 或 Playwright 截图产物。",
+      "expected_output": "以用户文本中的小红书图文卡片意图为准，触发 xiaohongshu-image-creator，默认输出到 /Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/；不得因为 mode=blog 改写到 content/post/，也不得生成 Hugo front matter、cards.html 或 Playwright 截图产物。",
       "files": [],
       "assertions": [
         "忽略与用户文本冲突的宿主 mode=blog 元数据，不改走 blog-orchestrator 或 Hugo 博客资源模式。",
-        "默认输出目录是 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/。",
+        "默认输出目录是 /Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/。",
         "如果 baoyu-xhs-images Skill 文件存在，读取并按该 Skill 工作流执行，不检查或依赖同名 CLI。",
         "不得创建 content/post/<slug>/、Hugo front matter、cards.html、SVG、HTML、Canvas 或 Playwright 截图源文件。",
         "如果 baoyu-xhs-images 或 raster backend 不可用，停止并报告，不生成替代图片。"

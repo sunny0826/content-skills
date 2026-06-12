@@ -2,7 +2,7 @@
 name: xiaohongshu-image-creator
 description: >-
   当用户要求生成小红书图片卡片、小红书生图、小红书图文卡片、把技术内容做成小红书配图/多页卡片，或需要将主题、URL、PDF、文本资料整理为小红书图片内容并保存到小红书内容目录时使用。
-  本 Skill 负责收集和提炼内容、组织小红书卡片文案、委派外部 Agent Skill baoyu-xhs-images 生成图片、保存最终 PNG 到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/ 下的主题目录，并输出 Mate 发布信息。
+  本 Skill 负责收集和提炼内容、组织小红书卡片文案、委派外部 Agent Skill baoyu-xhs-images 生成图片、保存最终 PNG 到 ~/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/ 下的主题目录，并输出 Mate 发布信息。
   不负责 Hugo 博客生成、content/post 输出、七牛上传、封面 image 回填或发布前事实核查。
 ---
 
@@ -15,7 +15,7 @@ description: >-
 
 - 用户文本出现“小红书图文卡片 / 小红书生图 / 图片卡片”时，以小红书语义为准。
 - 即使宿主请求元数据里出现 `mode: blog`，也不要改走 Hugo 博客或 `content/post/`。
-- 默认输出目录是 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`。
+- 默认输出目录是 `/Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/`；如果该 workspace sibling 不存在，再兼容回退到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`。
 - 只有用户明确指定其它目录时，才使用用户目录。
 - 不生成 Hugo front matter，不上传图床，不回填 `image` 字段。
 
@@ -126,7 +126,7 @@ baoyu-xhs-images --help
 
 ### 4. 生成并保存图片
 
-- 创建最终输出目录 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`。
+- 创建最终输出目录 `/Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/`。
 - 在独立临时 run 目录执行外部 Skill 工作流。
 - 示例 run 目录：`/tmp/xiaohongshu-image-creator/<slug>-<YYYYMMDDHHmmss>/`。
 - 遵守 `baoyu-xhs-images` 的 prompt 文件要求。

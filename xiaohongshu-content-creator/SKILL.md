@@ -1,7 +1,7 @@
 ---
 name: xiaohongshu-content-creator
 description: >-
-  当用户要求写小红书/Xiaohongshu 技术笔记、技术种草、短图文文案、可收藏的教程/避坑/观点解读，或保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/index.md 时使用。
+  当用户要求写小红书/Xiaohongshu 技术笔记、技术种草、短图文文案、可收藏的教程/避坑/观点解读，或保存到 ~/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/index.md 时使用。
   输出纯 Markdown：短段落、强结论、结构清晰、末尾包含 Mate（发布信息）。
   不生成封面、不上传图床、不回填 Hugo image；发布前核查由外部编排层或用户后续指令单独处理。
 user-invocable: true
@@ -34,13 +34,13 @@ user-invocable: true
 1. 主题与目标读者：面向谁、解决什么痛点。
 2. 参考资料：URL、文档、要点列表、代码片段、数据等（强烈建议提供）。
 3. 发布意图：是“经验复盘/教程/避坑/对比测评/观点解读/工具推荐/原理科普”哪一类。
-4. 输出路径：若用户未指定，默认写入 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/index.md`。
+4. 输出路径：若用户未指定，默认写入 `/Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/index.md`；如果该 workspace sibling 不存在，再兼容回退到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/index.md`。
 
 编排交接信息默认输出，不需要询问用户；本 Skill 只列检查建议，不直接执行检查。
 
 ## 可用资源
 
-- 目标目录 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/`：仅在需要对齐既有格式且用户允许时少量查看同类文章结构；不要批量读取正文。
+- 目标目录 `/Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/`：仅在需要对齐既有格式且用户允许时少量查看同类文章结构；不要批量读取正文。
 
 ## Gotchas
 
@@ -166,7 +166,7 @@ flowchart TD
  
 ### 4) 保存文件
  
-- 若用户未指定路径：生成 `slug`（小写、空格转连字符、去掉特殊符号），创建目录 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`，保存为 `index.md`。
+- 若用户未指定路径：生成 `slug`（小写、空格转连字符、去掉特殊符号），创建目录 `/Users/guoxudong/codes/blog-studio-workspace/guoxudong.io/content/xiaohongshu/<slug>/`，保存为 `index.md`。
 - 不要在对话中粘贴全文；只汇报写入路径、字数级别摘要与关键小节列表。
  
 Mate 页面要求：
