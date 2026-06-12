@@ -141,11 +141,26 @@
         "内容提炼逻辑参考小红书正文创作要求，包含核心结论、适用人群、关键步骤或边界条件。",
         "调用 baoyu-xhs-images 前根据内容自动设置 preset、style、layout、palette、图片张数和 batch-size，不使用 rendering、font、ratio、size 等未声明参数。",
         "调用 baoyu-xhs-images 时显式使用 --yes 或等价非交互指令，跳过 Smart Confirm，并在生成前简短说明自动采用的策略、风格、布局、配色、张数和后端假设。",
+        "baoyu-xhs-images 可用性基于 Skill inventory 或 baoyu-xhs-images/SKILL.md 是否存在，不能只用 which、command -v 或 --help 判断同名 CLI。",
         "生成图片保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/，并使用 01.png、02.png 这类稳定文件名。",
         "在独立临时 run 目录运行 baoyu-xhs-images，只复制或移动最终 PNG 到小红书内容目录；analysis.md、outline.md、prompts/ 和缓存文件不得留在最终目录。",
         "如果 baoyu-xhs-images 不可用，停止生图并报告缺少依赖，不降级到其它 Skill。",
         "最终输出 Mate 发布信息，包含建议标题、正文描述、参考资料、话题标签和生成图片清单。",
         "不生成 Hugo front matter，不上传图床，不回填 image 字段。"
+      ]
+    },
+    {
+      "id": 11,
+      "target_skill": "xiaohongshu-image-creator",
+      "prompt": "生成小红书图文卡片，内容为：介绍 GitHub spec-kit，相关链接：https://github.com/github/spec-kit。当前 .agents/skills/baoyu-xhs-images/SKILL.md 存在，但 PATH 里没有 baoyu-xhs-images 命令。",
+      "expected_output": "仍判定 baoyu-xhs-images Skill 可用，读取并按 baoyu-xhs-images/SKILL.md 的工作流执行，以 --yes 非交互方式生成图片；不得因为同名 CLI 不存在而降级到 SVG、HTML、Canvas、Puppeteer、rsvg-convert、ImageMagick 或手写卡片。",
+      "files": [],
+      "assertions": [
+        "先基于 Skill inventory 或 .agents/.claude/.trae 下的 baoyu-xhs-images/SKILL.md 判断 Skill 是否可用。",
+        "不把 which baoyu-xhs-images、command -v baoyu-xhs-images 或 baoyu-xhs-images --help 的失败作为 Skill 不可用的依据。",
+        "读取 baoyu-xhs-images/SKILL.md 并遵守其 prompt 文件、--yes、image-1 anchor chain 和 raster backend 规则。",
+        "如果 raster backend 不可用，停止并报告 backend 阻塞；不生成替代 PNG。",
+        "不使用 SVG、HTML、Canvas、Puppeteer、rsvg-convert、ImageMagick、generate-cover 或手写前端卡片作为 fallback。"
       ]
     }
   ]

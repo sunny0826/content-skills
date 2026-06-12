@@ -84,6 +84,7 @@
 
 **外部依赖：**
 - `baoyu-xhs-images`：必需。未安装或不可用时，`xiaohongshu-image-creator` 会停止生图并报告缺少依赖，不会降级到其它生图或封面 Skill。
+- 可用性以 Skill inventory 或 `baoyu-xhs-images/SKILL.md` 是否存在为准；`baoyu-xhs-images` 不是必须存在的同名 CLI，不能因 `which baoyu-xhs-images` 失败而改用 SVG/HTML/Canvas 等替代渲染。
 
 ### generate-cover
 

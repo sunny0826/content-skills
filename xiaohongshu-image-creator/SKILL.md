@@ -13,6 +13,8 @@ description: >-
 ## 硬性约束
 
 - 必须使用 `baoyu-xhs-images` 生成小红书图片卡片；如果该 Skill 不可用，停止生图并报告缺少依赖，不要降级到其它封面或通用生图 Skill。
+- `baoyu-xhs-images` 是外部 Agent Skill，不是必须存在的同名 CLI 命令。判断可用性时，以当前 Skill inventory 或 `.agents/skills/baoyu-xhs-images/SKILL.md`、`.claude/skills/baoyu-xhs-images/SKILL.md` 等 Skill 文件是否存在为准；不要用 `which baoyu-xhs-images`、`command -v baoyu-xhs-images` 或 `baoyu-xhs-images --help` 作为唯一依据。
+- 如果 `baoyu-xhs-images/SKILL.md` 存在，必须读取该 Skill 并按它的工作流执行；即使 PATH 中没有 `baoyu-xhs-images` 命令，也不能判定该 Skill 不可用。
 - 调用 `baoyu-xhs-images` 时必须显式使用 `--yes` 或等价“直接生成/不用确认”指令，跳过它的 Smart Confirm 交互门禁；调用前向用户简短说明采用的策略、风格、布局、配色、张数和后端假设。
 - 默认保存到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`；若用户指定目录，优先使用用户路径。
 - 生成图片必须保存在该内容目录下，文件名使用稳定顺序，例如 `01.png`、`02.png`、`03.png`。
@@ -79,7 +81,9 @@ description: >-
 
 ### 4. 生成并保存图片
 
-- 先确认 `baoyu-xhs-images` 可用；不可用时停止并说明需要安装 `https://github.com/JimLiu/baoyu-skills/tree/main/skills/baoyu-xhs-images`。
+- 先确认 `baoyu-xhs-images` Skill 可用：优先检查当前运行时的 Skill inventory；其次检查当前项目或目标项目的 `.agents/skills/baoyu-xhs-images/SKILL.md`、`.claude/skills/baoyu-xhs-images/SKILL.md`、`.trae/skills/baoyu-xhs-images/SKILL.md`。不要把同名 CLI 缺失当成 Skill 缺失。
+- 如果找不到 `baoyu-xhs-images` Skill，停止并说明需要安装 `https://github.com/JimLiu/baoyu-skills/tree/main/skills/baoyu-xhs-images`；不要降级到 SVG、HTML、Canvas、Puppeteer、`generate-cover` 或其它通用生图方式。
+- 如果找到了 `baoyu-xhs-images` Skill，但它的 raster backend 不可用，停止并报告 backend 阻塞；不要自行改用 SVG/HTML/canvas 渲染。
 - 生成 slug：小写、空格转连字符、去掉特殊符号；中文主题可使用简短拼音或英文关键词。
 - 创建最终输出目录 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`。
 - 在独立临时 run 目录执行 `baoyu-xhs-images`，例如 `/tmp/xiaohongshu-image-creator/<slug>-<YYYYMMDDHHmmss>/`，不要直接在最终内容目录内运行。
@@ -103,8 +107,10 @@ description: >-
 ## Gotchas
 
 - `baoyu-xhs-images` 默认要求生成前确认；本 Skill 是自动编排入口，必须显式使用 `--yes`，否则流程会停在确认步骤。
+- `baoyu-xhs-images` 是 Agent Skill，不是同名 shell 命令；`which baoyu-xhs-images` 或 `baoyu-xhs-images --help` 失败不能证明 Skill 不可用。
 - `baoyu-xhs-images` 会生成 `analysis.md`、`outline.md`、`prompts/` 和原始 PNG；这些是 run 目录里的可复现记录，不应混入小红书最终内容目录。
 - 不要把 `baoyu-cover-image` 的 `rendering/font/ratio` 参数迁移到这里；小红书卡片只使用 `baoyu-xhs-images` 支持的 style/layout/palette/preset 等维度。
+- 不要用 SVG、HTML、Canvas、Puppeteer、`rsvg-convert`、ImageMagick 或手写前端卡片替代 `baoyu-xhs-images`；依赖或 backend 不可用时应停止并报告。
 - 不要用程序叠字修图来补救乱码或错字；如果图片文字错误，修正 prompt 后重新生成对应卡片。
 - 不要把外部资料里的图片默认作为 `--ref`；参考图只在用户明确给出风格参考时使用。
 
@@ -112,7 +118,9 @@ description: >-
 
 交付前检查：
 
+- `baoyu-xhs-images` Skill 可用性判断基于 Skill inventory 或 `baoyu-xhs-images/SKILL.md` 文件；不能只基于同名 CLI 是否在 PATH 中。
 - `baoyu-xhs-images` 可用，调用中包含 `--yes`，并记录了自动选择的 preset/style/layout/palette/count。
+- 如果 PATH 中没有 `baoyu-xhs-images` 命令但 Skill 文件存在，仍按 Skill 工作流继续；如果 Skill 或 raster backend 不可用，则停止，不生成替代图片。
 - 最终目录只包含最终 PNG 和用户明确要求保留的内容文件，没有 `analysis.md`、`outline.md`、`prompts/`、临时 HTML 或缓存文件。
 - 图片数量与 Mate 中的图片清单一致，文件名按 `01.png`、`02.png` 顺序排列。
 - 每张图的文字可读，标题没有乱码、截断或明显事实错误；发现问题时重新生成，不直接覆盖修字。
