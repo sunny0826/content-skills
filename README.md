@@ -8,14 +8,19 @@
 
 **路径**：`blog-orchestrator/SKILL.md`
 
-用于端到端编排 Hugo 博客发布流程：生成文章、授权核查并直接修正、使用 `stop-slop` 去除 AI 味、生成封面并让用户 review、上传七牛图床、回填 `image` 字段。
+用于端到端编排 Hugo 博客发布流程：生成文章、授权核查并直接修正、尽量使用 `stop-slop` 去除 AI 味、用 `baoyu-cover-image` 自动生成封面、上传七牛图床、回填 `image` 字段。
 
 **核心能力：**
 - **发布流水线编排**：串联 `content-creator`、`content-checker`、封面生成 Skill 和 `qiniu-kodo`。
-- **去 AI 味处理**：核查完成后调用 `stop-slop`，只改表达，不改事实、链接、数字、代码或 front matter。
-- **封面生成选择**：优先使用 `baoyu-cover-image`；不可用时降级使用 `generate-cover`。
-- **用户 review 门槛**：封面图必须经用户确认满意后才上传图床和回填文章字段。
+- **去 AI 味处理**：核查完成后调用 `stop-slop`；不可用时记录并继续，不打断流程。
+- **自动封面生成**：直接使用外部 Skill `baoyu-cover-image`，按文章内容自动设置参数，默认比例 `2.35:1`。
+- **自动上传回填**：封面生成后直接上传图床并回填文章 `image` 字段。
 - **默认博客入口**：普通“写一篇博客，内容为...，相关链接和内容...”请求默认走本 Skill；只有明确要求只生成正文时才使用 `content-creator`。
+
+**外部依赖：**
+- `baoyu-cover-image`：必需。未安装或不可用时，`blog-orchestrator` 会停止封面、上传和回填步骤，并保留已生成、已核查的文章；不会降级到 `generate-cover`。
+- `stop-slop`：可选。不可用时只记录原因并继续流程。
+- `blog-orchestrator` 不对封面做人工 review，也不询问封面参数；封面参数由文章内容自动决定。
 
 ### content-creator
 
@@ -64,6 +69,22 @@
 
 用于创作“小红书风格”的技术文章/技术笔记，输出纯 Markdown（无 Hugo front matter），版式对齐 `content/xiaohongshu/*/index.md`；不负责封面、图床上传或发布前核查。
 
+### xiaohongshu-image-creator
+
+**路径**：`xiaohongshu-image-creator/SKILL.md`
+
+用于把主题、URL、PDF 或文本资料整理为小红书图片卡片内容，并以 `--yes` 非交互方式调用外部 Skill `baoyu-xhs-images` 生成图片，保存最终 PNG 到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`，最后输出 Mate 发布信息。
+
+**核心能力：**
+- **小红书卡片内容组织**：参考 `xiaohongshu-content-creator` 的素材提炼逻辑，将内容拆成多页图片卡片。
+- **自动生图参数**：根据内容类型自动决定 `baoyu-xhs-images` 的 `preset`、`style`、`layout`、`palette`、张数和批量大小。
+- **目录化保存**：将最终图片保存到小红书内容目录，并保持目录干净。
+- **中间产物隔离**：在临时 run 目录保留 `baoyu-xhs-images` 的 `analysis.md`、`outline.md`、`prompts/` 和原始 PNG，最终目录只放发布用图片。
+- **发布信息交接**：输出建议标题、正文描述、参考资料、话题标签和图片清单。
+
+**外部依赖：**
+- `baoyu-xhs-images`：必需。未安装或不可用时，`xiaohongshu-image-creator` 会停止生图并报告缺少依赖，不会降级到其它生图或封面 Skill。
+
 ### generate-cover
 
 **路径**：`gen-cover-skill/SKILL.md`
@@ -95,11 +116,12 @@
 - `blog-orchestrator`：负责编排完整 Hugo 博客发布流水线。
 - `content-creator`：生成并保存 Hugo Markdown，输出编排交接信息。
 - `xiaohongshu-content-creator`：生成并保存小红书 Markdown，输出编排交接信息。
+- `xiaohongshu-image-creator`：生成小红书图片卡片并保存到小红书内容目录，输出 Mate 发布信息。
 - `content-checker`：只在用户或外部编排层明确发起核查任务时运行。
 - `generate-cover`：只生成本地 PNG 封面。
 - `qiniu-kodo`：只上传本地图片并返回公开 URL。
 
-如果需要“生成文章 -> 内容核查 -> 去 AI 味 -> 生成封面 -> 用户 review -> 上传图床 -> 回填 image”的完整流水线，使用 `blog-orchestrator`。
+如果需要“生成文章 -> 内容核查 -> 去 AI 味 -> 自动生成封面 -> 上传图床 -> 回填 image”的完整流水线，使用 `blog-orchestrator`。
 
 ## 低噪声网页抽取
 

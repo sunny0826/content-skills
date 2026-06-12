@@ -75,16 +75,77 @@
       "id": 6,
       "target_skill": "blog-orchestrator",
       "prompt": "写一篇博客，内容为：介绍文章内容，相关链接和内容：1. https://claude.com/blog/how-anthropic-enables-self-service-data-analytics-with-claude",
-      "expected_output": "默认触发 blog-orchestrator，并按固定顺序编排 content-creator、content-checker、stop-slop、baoyu-cover-image/generate-cover、用户封面 review、qiniu-kodo 上传、image 回填和封面临时产物清理；在用户确认封面前不上传图床，不修改 image 字段。",
+      "expected_output": "默认触发 blog-orchestrator，并按固定顺序编排 content-creator、content-checker、stop-slop、baoyu-cover-image、qiniu-kodo 上传、image 回填和封面临时产物清理；stop-slop 不可用时记录并继续；封面参数按文章内容自动设置，不询问、不 review、不降级 generate-cover。",
       "files": [],
       "assertions": [
         "先调用 content-creator 生成 Hugo Markdown，并记录文章路径和编排交接信息。",
         "随后调用 content-checker，并明确授权“无需确认直接改，仅限修改刚生成的文章文件”。",
-        "内容核查并应用修改后调用 stop-slop 去除 AI 味；只改表达，不改 front matter、链接、数字、代码块、引用或参考资料事实。",
-        "封面阶段先判断 baoyu-cover-image 是否可用；可用时默认使用 2.35:1 并询问 type、palette、rendering、text、mood、font 等选择；不可用时说明原因并降级 generate-cover。",
-        "封面图生成后必须展示或提供本地路径给用户 review；用户未确认满意前不调用 qiniu-kodo。",
-        "用户确认满意后才上传七牛，并将返回 URL 回填到同一篇文章 front matter 的 image 字段。",
-        "上传并回填成功后，清理本流程创建的封面临时目录，例如 cover-image/<slug>/prompts/*.md 和 cover-image/<slug>/cover.png；用户明确要求保留时除外。"
+        "内容核查并应用修改后调用 stop-slop 去除 AI 味；stop-slop 不可用时记录原因并继续，不询问、不打断流程。",
+        "stop-slop 后执行轻量事实保护验证，确认 front matter、链接、数字、代码块、引用和参考资料未被无故改动。",
+        "封面阶段直接使用 baoyu-cover-image；默认比例为 2.35:1，并根据文章内容自动设置 type、palette、rendering、text、mood、font 等参数。",
+        "不询问封面参数，不进行用户 review，不降级调用 generate-cover。",
+        "封面生成成功后直接上传七牛，并将返回 URL 回填到同一篇文章 front matter 的 image 字段。",
+        "上传并回填成功后，只清理本流程创建的封面临时文件清单，不删除生成前已存在的 cover-image/<slug>/ 目录或历史文件。"
+      ]
+    },
+    {
+      "id": 7,
+      "target_skill": "blog-orchestrator",
+      "prompt": "使用 blog-orchestrator 写一篇博客，资料是 https://example.com/source。当前 stop-slop 不可用，但其它 Skill 可用。",
+      "expected_output": "继续完整流程：记录 stop-slop 不可用并跳过去 AI 味步骤，不询问用户、不暂停；继续 baoyu-cover-image、qiniu-kodo 上传和 image 回填。",
+      "files": [],
+      "assertions": [
+        "content-creator 和 content-checker 仍按顺序执行。",
+        "stop-slop 不可用时记录跳过原因，不询问用户是否继续。",
+        "仍执行 stop-slop 后的轻量事实保护验证或说明该验证基于跳过状态完成。",
+        "继续使用 baoyu-cover-image 生成封面并上传七牛。",
+        "成功上传后回填 image 字段并清理本流程创建的封面临时文件。"
+      ]
+    },
+    {
+      "id": 8,
+      "target_skill": "blog-orchestrator",
+      "prompt": "使用 blog-orchestrator 写一篇博客，资料是 https://example.com/source。当前 baoyu-cover-image 不可用。",
+      "expected_output": "生成并核查文章，按可用性处理 stop-slop；发现 baoyu-cover-image 不可用后停止封面、上传和 image 回填，报告原因并保留已生成文章，不降级 generate-cover。",
+      "files": [],
+      "assertions": [
+        "content-creator 和 content-checker 已完成，文章路径可用。",
+        "baoyu-cover-image 不可用时停止封面、上传和回填步骤。",
+        "不调用 generate-cover 作为 fallback。",
+        "不调用 qiniu-kodo 上传。",
+        "文章 image 字段保持不变，并清楚报告部分完成状态。"
+      ]
+    },
+    {
+      "id": 9,
+      "target_skill": "blog-orchestrator",
+      "prompt": "使用 blog-orchestrator 写一篇博客，资料是 https://example.com/source。封面已成功生成，但 qiniu-kodo test-connection 失败。",
+      "expected_output": "在七牛连接失败时停止上传，不回填 image；报告失败原因，保留文章，并询问是否清理本地封面临时文件，不擅自删除。",
+      "files": [],
+      "assertions": [
+        "qiniu-kodo 上传前先执行 test-connection。",
+        "test-connection 失败时不执行 upload。",
+        "不修改文章 front matter 的 image 字段。",
+        "报告七牛配置或连接失败原因。",
+        "上传失败时不擅自删除封面临时文件，而是询问是否清理。"
+      ]
+    },
+    {
+      "id": 10,
+      "target_skill": "xiaohongshu-image-creator",
+      "prompt": "生成一组小红书图片卡片，主题是“Claude Code 技术团队如何用 Skills 解耦内容生产流程”，参考资料包括现有博客编排 Skill 和小红书正文 Skill。使用 baoyu-xhs-images 生图，保存到小红书内容目录，并输出 Mate 发布信息。",
+      "expected_output": "触发 xiaohongshu-image-creator，先提炼内容并拆成小红书多页卡片，再根据内容自动确定 baoyu-xhs-images 的 preset/style/layout/palette/count 等参数，使用 --yes 非交互方式调用 baoyu-xhs-images 生成图片，只将最终 PNG 保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/，最后输出 Mate 发布信息。",
+      "files": [],
+      "assertions": [
+        "默认使用 xiaohongshu-image-creator，而不是 xiaohongshu-content-creator、blog-orchestrator 或 generate-cover。",
+        "内容提炼逻辑参考小红书正文创作要求，包含核心结论、适用人群、关键步骤或边界条件。",
+        "调用 baoyu-xhs-images 前根据内容自动设置 preset、style、layout、palette、图片张数和 batch-size，不使用 rendering、font、ratio、size 等未声明参数。",
+        "调用 baoyu-xhs-images 时显式使用 --yes 或等价非交互指令，跳过 Smart Confirm，并在生成前简短说明自动采用的策略、风格、布局、配色、张数和后端假设。",
+        "生成图片保存到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/，并使用 01.png、02.png 这类稳定文件名。",
+        "在独立临时 run 目录运行 baoyu-xhs-images，只复制或移动最终 PNG 到小红书内容目录；analysis.md、outline.md、prompts/ 和缓存文件不得留在最终目录。",
+        "如果 baoyu-xhs-images 不可用，停止生图并报告缺少依赖，不降级到其它 Skill。",
+        "最终输出 Mate 发布信息，包含建议标题、正文描述、参考资料、话题标签和生成图片清单。",
+        "不生成 Hugo front matter，不上传图床，不回填 image 字段。"
       ]
     }
   ]

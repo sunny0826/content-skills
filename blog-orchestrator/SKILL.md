@@ -3,14 +3,14 @@ name: blog-orchestrator
 description: >-
   当用户要求写一篇博客、生成 Hugo 博客、发布博客、介绍文章内容并给出相关链接/资料、基于 URL/PDF/文本写博客，或需要端到端生成文章、核查、制作封面、上传图床、回填 image 字段时使用。
   对普通“写一篇博客/写博客，内容为/相关链接和内容”这类请求默认使用本 Skill；只有用户明确说“只生成正文/只用 content-creator/不要封面上传核查”时才改用单职责 Skill。
-  本 Skill 只负责编排：先生成博客内容，再授权核查并直接修正，然后使用 stop-slop 去除 AI 味，随后生成封面并让用户 review，满意后上传七牛 KODO 并回填文章 front matter 的 image 字段。
+  本 Skill 只负责编排：先生成博客内容，再授权核查并直接修正，然后尽量使用 stop-slop 去除 AI 味，随后直接使用 baoyu-cover-image 自动生成封面，上传七牛 KODO 并回填文章 front matter 的 image 字段。
   不适用于只核查、只生成封面或只上传图片的单步任务；这些任务分别使用对应的单职责 Skill。
 user-invocable: true
 ---
 
 # 博客发布编排 Skill
 
-你的任务是把多个单职责 Skill 串成一条可控的 Hugo 博客发布流水线。不要复制下游 Skill 的内部细节；把内容创作、核查、封面生成和上传分别交给对应 Skill，并在关键节点向用户确认。
+你的任务是把多个单职责 Skill 串成一条可控的 Hugo 博客发布流水线。不要复制下游 Skill 的内部细节；把内容创作、核查、封面生成和上传分别交给对应 Skill，并尽量减少非阻塞交互。
 
 ## 编排目标
 
@@ -18,11 +18,10 @@ user-invocable: true
 
 1. 使用 `content-creator` 生成 Hugo 博客内容。
 2. 使用 `content-checker` 对刚生成的文章做内容核查，并明确授权“无需确认直接改”。
-3. 使用 `stop-slop` 对核查后的正文做去 AI 味处理。
-4. 生成封面图：优先判断 `baoyu-cover-image` 是否可用；可用则使用它，不可用则降级使用 `generate-cover`。
-5. 将封面图展示给用户 review；如果用户要求修改，按反馈重新生成封面图。
-6. 用户确认满意后，使用 `qiniu-kodo` 上传封面图，并将公开 URL 回填到文章 front matter 的 `image` 字段。
-7. 清理封面生成临时产物，输出最终文章路径、封面 URL、核查、去 AI 味和修改摘要。
+3. 如果 `stop-slop` 可用，则对核查后的正文做去 AI 味处理；不可用则记录并继续，不询问、不打断流程。
+4. 直接使用 `baoyu-cover-image` 生成封面图，封面比例默认 `2.35:1`，参数根据文章内容自动设置。
+5. 使用 `qiniu-kodo` 上传封面图，并将公开 URL 回填到文章 front matter 的 `image` 字段。
+6. 清理封面生成临时产物，输出最终文章路径、封面 URL、核查、去 AI 味和修改摘要。
 
 ## 需要的信息
 
@@ -30,7 +29,6 @@ user-invocable: true
 
 - 参考资料：URL、PDF、文本、要点或代码片段。
 - 文章主题/标题、分类、标签、作者、输出路径（可选）。
-- 是否有特殊封面偏好：风格、颜色、是否显示标题、是否包含人物/产品/代码元素。
 - 七牛对象 key 偏好（可选）：默认 `image/<slug>-cover.png`。
 
 ## 工作流程
@@ -60,8 +58,8 @@ user-invocable: true
 先判断 `stop-slop` 是否可用：
 
 - 可用条件：当前运行时的可用 Skill/工具清单中存在 `stop-slop`，或本地安装根能明确找到 `stop-slop/SKILL.md`。
-- 不可用条件：清单中没有该 Skill、Skill 加载失败、或它要求进行首次配置且用户不想在本流程中配置。
-- 不要自动从 GitHub 下载或安装 `stop-slop`；如果用户想安装，停下来让用户另行确认。
+- 不可用条件：清单中没有该 Skill、Skill 加载失败、或它要求进行首次配置。
+- 不要自动从 GitHub 下载或安装 `stop-slop`。
 
 如果可用，调用 `stop-slop` 处理第 2 步核查后的同一篇文章，目标是去除 AI 写作痕迹，而不是重写事实：
 
@@ -78,21 +76,30 @@ user-invocable: true
 - 不引入新的事实、案例、观点或来源。
 - 修改后输出短摘要和评分/检查结果；不要打印整篇文章或完整 diff。
 
-如果 `stop-slop` 不可用，告知用户并询问是否跳过去 AI 味步骤继续封面生成；不要静默跳过。
+如果 `stop-slop` 不可用，记录“已跳过去 AI 味：stop-slop 不可用”并继续封面生成；不要询问用户，也不要打断流程。
 
-### 4. 选择封面生成方案
+### 4. 轻量事实保护验证
+
+`stop-slop` 执行或跳过后，做一次轻量验证，再进入封面生成：
+
+- 检查 front matter 的 `title`、`date`、`slug`、`image` 是否被无故改动。
+- 检查正文中的 URL、数字、日期、代码块、命令、引用块和参考资料列表是否被无故改动。
+- 若发现非表达层面的改动，恢复这些事实性内容或重新调用 `content-checker` 针对该点修正。
+- 只输出验证摘要，不打印整篇文章或完整 diff。
+
+### 5. 生成封面
 
 先判断 `baoyu-cover-image` 是否可用：
 
 - 可用条件：当前运行时的可用 Skill/工具清单中存在 `baoyu-cover-image`，或本地安装根能明确找到 `baoyu-cover-image/SKILL.md`。
-- 不可用条件：清单中没有该 Skill、Skill 加载失败、或它要求进行首次配置且用户不想在本流程中配置。
+- 不可用条件：清单中没有该 Skill、Skill 加载失败、或它要求进行首次配置。
 - 不要自动从 GitHub 下载或安装 `baoyu-cover-image`；如果用户想安装，停下来让用户另行确认。
 
-#### 4A. 首选：使用 baoyu-cover-image
+如果 `baoyu-cover-image` 不可用，停止封面、上传和回填步骤，报告不可用原因，并保留已生成和已核查的文章；不要降级到 `generate-cover`。
 
-默认封面宽高比为 `2.35:1`。
+使用 `baoyu-cover-image` 时，封面宽高比固定默认 `2.35:1`。
 
-根据文章内容给出推荐选项，并询问用户选择。至少覆盖这些维度：
+根据文章内容直接设置参数，不询问用户。至少自动决策这些维度，并在最终摘要中说明选择理由：
 
 - `type`：`hero`、`conceptual`、`typography`、`metaphor`、`scene`、`minimal`。
 - `palette`：例如 `warm`、`elegant`、`cool`、`dark`、`earth`、`vivid`、`pastel`、`mono`、`retro`、`duotone`、`macaron`。
@@ -101,38 +108,28 @@ user-invocable: true
 - `mood`：`subtle`、`balanced`、`bold`。
 - `font`：`clean`、`handwritten`、`serif`、`display`。
 
-把推荐项放在每个问题的第一位，并用一句话说明理由。若当前运行时有结构化提问工具，优先批量提问；否则用简短编号列表让用户回复。
+选择原则：
 
-确认后调用 `baoyu-cover-image` 生成封面图，并保存本地输出路径。
+- 技术解释、数据分析、工程实践类文章优先 `conceptual` 或 `metaphor`。
+- 产品发布、工具介绍、可视化能力展示类文章优先 `hero` 或 `scene`。
+- 观点评论、方法论和抽象主题可用 `typography` 或 `minimal`。
+- `palette` 与文章情绪一致：数据/分析偏 `cool`、稳重技术偏 `elegant`、创造力/产品偏 `vivid` 或 `duotone`。
+- `text` 默认 `title-subtitle`；如果标题过长，使用 `title-only`。
+- `mood` 默认 `balanced`；重大发布或强观点可用 `bold`。
+- `font` 默认 `clean`；叙事或观点类可用 `serif` 或 `display`。
 
-记录封面生成临时目录。`baoyu-cover-image` 常见输出形态是 `cover-image/<slug>/cover.png` 以及 `cover-image/<slug>/prompts/*.md`；这些文件只用于 review 和上传，不应在流程成功结束后留在仓库中。
+调用 `baoyu-cover-image` 生成封面图，并保存本地输出路径。
 
-#### 4B. 降级：使用 generate-cover
+封面临时目录安全规则：
 
-如果 `baoyu-cover-image` 不可用，说明降级原因，然后使用 `generate-cover`。
-
-询问并确认：
-
-- `title`：默认使用文章标题。
-- `subtitle`：默认使用文章 description 或 summary。
-- `label`：默认使用主分类或主标签。
-- `author`：默认使用文章 authors。
-- `scheme`：根据文章主题推荐一个数值。
-- `deco`：在 `classic`、`cyberpunk`、`sphere`、`minimal` 中推荐一个。
-
-注意：`generate-cover` 只负责本地 PNG，且可能不支持精确设置 `2.35:1`。如果用户坚持精确比例，建议安装/启用 `baoyu-cover-image` 或先确认可接受 fallback 的内置尺寸，不要擅自裁切或后处理封面图。
-
-### 5. 用户 review 封面图
-
-- 生成封面后，把本地图片展示给用户 review。
-- 如果当前界面支持本地图片展示，使用 Markdown 图片语法展示绝对路径；否则给出绝对路径。
-- 询问用户是否满意。
-- 如果用户要求修改，收集具体反馈，并回到第 4 步使用同一封面方案重新生成。重新生成成功后，清理上一轮被淘汰的封面临时目录；只清理本流程创建的目录。
-- 只有用户明确满意后，才进入上传步骤。
+- 优先使用带时间戳或 run id 的本次专属目录，例如 `cover-image/<slug>-<YYYYMMDDHHmmss>/`，避免覆盖已有素材。
+- 生成前记录目标目录是否已存在；如果已存在，不要把整个目录标记为可删除。
+- 记录本次流程创建的文件清单，至少包括封面 PNG 和 prompts 文件。
+- `baoyu-cover-image` 常见输出形态是 `cover-image/<slug>/cover.png` 以及 `cover-image/<slug>/prompts/*.md`；这些文件只用于上传，不应在流程成功结束后留在仓库中。
 
 ### 6. 上传并回填 image
 
-- 调用 `qiniu-kodo` 上传用户确认后的本地封面图。
+- 调用 `qiniu-kodo` 上传刚生成的本地封面图。
 - 上传前先执行 `test-connection`；失败则停止上传并报告原因，不修改文章 `image` 字段。
 - 默认对象 key：`image/<slug>-cover.png`。如果冲突或用户指定其它 key，以用户指定为准。
 - 上传时优先使用 `--format text` 获取公开 URL。
@@ -145,13 +142,14 @@ user-invocable: true
 
 上传并回填成功后，默认清理本流程创建的封面临时产物：
 
-- `baoyu-cover-image` 生成的 `cover-image/<slug>/`，包括 `prompts/*.md` 和 `cover.png`。
-- `generate-cover` 降级分支中创建的临时封面工作目录。
+- 清理本次流程记录的文件清单，例如封面 PNG 和 prompts 文件。
+- 如果本次创建的是空的专属临时目录，可以删除该空目录。
 
 清理边界：
 
-- 只删除本次流程创建、且已成功上传的封面临时目录。
+- 只删除本次流程创建、且已成功上传的封面临时文件。
 - 不删除用户显式指定要保留的输出路径。
+- 不删除生成前已经存在的 `cover-image/<slug>/` 目录或其中的历史文件。
 - 不删除文章目录、文章正文、抽取来源文件或七牛配置文件。
 - 如果上传失败或用户取消流程，询问是否清理本地封面临时目录，不要擅自删除。
 
@@ -161,20 +159,21 @@ user-invocable: true
 
 - 文章路径。
 - 核查是否已直接修正，以及关键修改摘要。
-- `stop-slop` 是否已执行，以及去 AI 味处理摘要。
-- 封面生成方式：`baoyu-cover-image` 或 `generate-cover`。
+- `stop-slop` 是否已执行；若不可用，说明已自动跳过。
+- 封面参数选择摘要。
 - 七牛公开 URL。
 - `image` 字段是否已回填。
-- 封面临时产物是否已清理；如果用户要求保留，再给出本地封面路径。
+- 封面临时产物是否已清理。
 
 ## Gotchas
 
 - **先核查，再生成封面**：封面文案和视觉建议应基于核查后的文章，而不是初稿。
 - **先事实，再风格**：`stop-slop` 必须在 `content-checker` 之后执行；它只处理表达，不改变事实、链接、数字、代码或 front matter。
-- **stop-slop 不可用时不要静默跳过**：停下来说明原因，询问用户是否跳过去 AI 味步骤继续。
-- **review 是硬门槛**：不要在用户确认封面满意前上传图床或回填 `image`。
-- **临时封面产物要收尾**：`cover-image/<slug>/prompts/*.md`、`cover-image/<slug>/cover.png` 等中间文件在上传并回填成功后默认清理，避免污染仓库。
-- **baoyu-cover-image 只做可用性判断**：不可用时降级，不自动安装。
+- **stop-slop 后要轻量验证**：进入封面生成前，确认 front matter、链接、数字、代码块、引用和参考资料未被无故改动。
+- **stop-slop 不可用时继续流程**：记录跳过原因即可，不询问、不暂停。
+- **封面不走人工 review**：`baoyu-cover-image` 生成后直接上传，减少发布流水线中断点。
+- **临时封面产物要精确清理**：只清理本次创建的文件清单，不要删除生成前已存在的目录或历史文件。
+- **baoyu-cover-image 是唯一封面方案**：不可用时停止封面、上传和回填，不降级到 `generate-cover`。
 - **content-checker 的直接修改授权只限当前文章**：不要让“无需确认直接改”扩大到其它文件。
 - **qiniu-kodo 不读 `.env`**：配置可用性只通过它的连接检查判断。
 - **日志低噪声**：不要打印整篇文章、整页 HTML、完整 diff 或密钥相关信息。
@@ -183,8 +182,9 @@ user-invocable: true
 
 - 文章文件存在，且 Hugo front matter 日期不晚于当前时间。
 - `content-checker` 已对同一篇文章输出核查报告，并在授权模式下应用必要修正。
-- `stop-slop` 已处理核查后的正文，或用户明确同意在不可用时跳过；front matter、链接、数字、代码块和参考资料未被无故改动。
-- 用户已 review 并确认最终封面。
+- `stop-slop` 已处理核查后的正文，或因不可用被记录并自动跳过；front matter、链接、数字、代码块和参考资料未被无故改动。
+- `stop-slop` 后已完成轻量事实保护验证。
+- `baoyu-cover-image` 已按文章内容自动设置参数并生成 `2.35:1` 封面。
 - 上传成功时，文章 front matter 的 `image` 字段是七牛公开 URL。
-- 上传并回填成功后，本流程创建的封面临时目录已清理，或用户明确要求保留。
+- 上传并回填成功后，本流程创建的封面临时文件已清理，生成前已存在的目录和历史文件未被删除。
 - 上传失败时，文章 `image` 字段保持不变，并清楚说明失败原因。

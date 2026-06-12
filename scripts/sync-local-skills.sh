@@ -40,6 +40,7 @@ for target_root in "${TARGET_ROOTS[@]}"; do
   sync_skill "content-creator" "content-creator" "$target_root"
   sync_skill "content-checker" "content-checker" "$target_root"
   sync_skill "xiaohongshu-content-creator" "xiaohongshu-content-creator" "$target_root"
+  sync_skill "xiaohongshu-image-creator" "xiaohongshu-image-creator" "$target_root"
   sync_skill "gen-cover-skill" "generate-cover" "$target_root"
   sync_skill "qiniu-kodo" "qiniu-kodo" "$target_root"
 done
