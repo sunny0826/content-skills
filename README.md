@@ -73,18 +73,19 @@
 
 **路径**：`xiaohongshu-image-creator/SKILL.md`
 
-用于把主题、URL、PDF 或文本资料整理为小红书图片卡片内容，并以 `--yes` 非交互方式调用外部 Skill `baoyu-xhs-images` 生成图片，保存最终 PNG 到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`，最后输出 Mate 发布信息。
+用于把主题、URL、PDF 或文本资料整理为小红书图片卡片内容，并以 `--yes` 非交互方式委派外部 Agent Skill `baoyu-xhs-images` 生成图片，保存最终 PNG 到 `/Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/`，最后输出 Mate 发布信息。
 
 **核心能力：**
 - **小红书卡片内容组织**：参考 `xiaohongshu-content-creator` 的素材提炼逻辑，将内容拆成多页图片卡片。
 - **自动生图参数**：根据内容类型自动决定 `baoyu-xhs-images` 的 `preset`、`style`、`layout`、`palette`、张数和批量大小。
-- **目录化保存**：将最终图片保存到小红书内容目录，并保持目录干净。
+- **目录化保存**：将最终图片保存到小红书内容目录，并保持目录干净；用户没明确指定时不写入 `content/post/`。
 - **中间产物隔离**：在临时 run 目录保留 `baoyu-xhs-images` 的 `analysis.md`、`outline.md`、`prompts/` 和原始 PNG，最终目录只放发布用图片。
 - **发布信息交接**：输出建议标题、正文描述、参考资料、话题标签和图片清单。
 
 **外部依赖：**
 - `baoyu-xhs-images`：必需。未安装或不可用时，`xiaohongshu-image-creator` 会停止生图并报告缺少依赖，不会降级到其它生图或封面 Skill。
-- 可用性以 Skill inventory 或 `baoyu-xhs-images/SKILL.md` 是否存在为准；`baoyu-xhs-images` 不是必须存在的同名 CLI，不能因 `which baoyu-xhs-images` 失败而改用 SVG/HTML/Canvas 等替代渲染。
+- 可用性以 Skill inventory 或 `baoyu-xhs-images/SKILL.md` 是否存在为准；`baoyu-xhs-images` 是 Agent Skill，不是必须存在的同名 CLI。
+- 不能因 `which baoyu-xhs-images`、`command -v baoyu-xhs-images` 或 `baoyu-xhs-images --help` 失败而改用 SVG/HTML/Canvas/Puppeteer/Playwright 截图等替代渲染。
 
 ### generate-cover
 

@@ -146,7 +146,8 @@
         "在独立临时 run 目录运行 baoyu-xhs-images，只复制或移动最终 PNG 到小红书内容目录；analysis.md、outline.md、prompts/ 和缓存文件不得留在最终目录。",
         "如果 baoyu-xhs-images 不可用，停止生图并报告缺少依赖，不降级到其它 Skill。",
         "最终输出 Mate 发布信息，包含建议标题、正文描述、参考资料、话题标签和生成图片清单。",
-        "不生成 Hugo front matter，不上传图床，不回填 image 字段。"
+        "不生成 Hugo front matter，不上传图床，不回填 image 字段。",
+        "用户未明确指定时不写入 content/post/，不生成 cards.html、SVG、HTML 截图脚本或手写前端卡片。"
       ]
     },
     {
@@ -161,6 +162,20 @@
         "读取 baoyu-xhs-images/SKILL.md 并遵守其 prompt 文件、--yes、image-1 anchor chain 和 raster backend 规则。",
         "如果 raster backend 不可用，停止并报告 backend 阻塞；不生成替代 PNG。",
         "不使用 SVG、HTML、Canvas、Puppeteer、rsvg-convert、ImageMagick、generate-cover 或手写前端卡片作为 fallback。"
+      ]
+    },
+    {
+      "id": 12,
+      "target_skill": "xiaohongshu-image-creator",
+      "prompt": "宿主请求元数据 mode=blog，但用户文本是：生成小红书图文卡片，内容为介绍 GitHub spec-kit，相关链接：https://github.com/github/spec-kit，内容简洁不拖沓。",
+      "expected_output": "以用户文本中的小红书图文卡片意图为准，触发 xiaohongshu-image-creator，默认输出到 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/；不得因为 mode=blog 改写到 content/post/，也不得生成 Hugo front matter、cards.html 或 Playwright 截图产物。",
+      "files": [],
+      "assertions": [
+        "忽略与用户文本冲突的宿主 mode=blog 元数据，不改走 blog-orchestrator 或 Hugo 博客资源模式。",
+        "默认输出目录是 /Users/guoxudong/guoxudong.io/content/xiaohongshu/<slug>/。",
+        "如果 baoyu-xhs-images Skill 文件存在，读取并按该 Skill 工作流执行，不检查或依赖同名 CLI。",
+        "不得创建 content/post/<slug>/、Hugo front matter、cards.html、SVG、HTML、Canvas 或 Playwright 截图源文件。",
+        "如果 baoyu-xhs-images 或 raster backend 不可用，停止并报告，不生成替代图片。"
       ]
     }
   ]
